@@ -3,9 +3,9 @@ name: rilis-tiket
 description: Baca feedback QA terakhir tiap tiket (Ready To Review/Done) lalu bertindak - kembalikan ke Todo, build variant lain (Beta/Prod), atau audit + merge PR/MR tiket ke branch integrasi. Dipanggil lewat `/rilis-tiket KODE...`. Use when asked to follow up QA feedback, build another variant, or merge a ticket PR; kata kunci - rilis tiket, feedback QA, tolak tiket, build beta, merge PR tiket.
 argument-hint: KODE...
 ---
-Tindak lanjuti feedback QA untuk satu atau lebih tiket (`$ARGUMENTS`). Sesi ini = **Release**: ikuti `~/.claude/agents/release.md`. Keputusan (izin Todo, izin merge, izin Prod) ke user lewat chat: ringkasan + satu saran. Rilis per versi (PR rilis, build live, tag) bukan di sini: itu `/branch-manager --rilis`.
+Tindak lanjuti feedback QA untuk satu atau lebih tiket (`$ARGUMENTS`). Sesi ini = **Release**: ikuti `~/.agent-workflow/repo/agents/release.md`. Keputusan (izin Todo, izin merge, izin Prod) ke user lewat chat: ringkasan + satu saran. Rilis per versi (PR rilis, build live, tag) bukan di sini: itu `/branch-manager --rilis`.
 
-Baca dulu (jangan disalin ke sini): `~/.claude/skills/_agent-workflow-shared/rules.md`, `build-release.md` (Merge PR tiket), `report-format.md`, `credentials.md`. Skrip: `$AGENT_WORKFLOW_DIR/bin/<skrip>` (`AGENT_WORKFLOW_DIR` diisi seperti di `rules.md`). Remote: `origin` = downstream (fork), `upstream` = repo utama.
+Baca dulu (jangan disalin ke sini): `~/.agent-workflow/repo/skills/_shared/rules.md`, `build-release.md` (Merge PR tiket), `report-format.md`, `credentials.md`. Skrip: `$AGENT_WORKFLOW_DIR/bin/<skrip>` (`AGENT_WORKFLOW_DIR` diisi seperti di `rules.md`). Remote: `origin` = downstream (fork), `upstream` = repo utama.
 
 ```mermaid
 flowchart LR

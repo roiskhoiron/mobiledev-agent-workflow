@@ -3,9 +3,9 @@ name: develop-tiket
 description: Kerjakan tiket In Progress sampai Ready To Review (rencana, kode TDD, review, QA di device, build, PR/MR, komentar tiket). Dipanggil lewat `/develop-tiket KODE... [--solo|--tim] [--batch|--separate] [--uat]` dari worktree domain Orca. Use when asked to develop, implement, or fix a ticket (Jira, GitHub Projects, GitLab board, or none); kata kunci - kerjakan tiket, develop tiket, implementasi tiket.
 argument-hint: KODE-TIKET... [--solo|--tim] [--batch|--separate] [--uat]
 ---
-Kerjakan satu atau lebih tiket (`$ARGUMENTS`). Sesi ini = **SPV**: ikuti `~/.claude/agents/spv.md` (tidak menulis kode produk, tidak memindah ke Done).
+Kerjakan satu atau lebih tiket (`$ARGUMENTS`). Sesi ini = **SPV**: ikuti `~/.agent-workflow/repo/agents/spv.md` (tidak menulis kode produk, tidak memindah ke Done).
 
-Baca dulu (jangan disalin ke sini): `~/.claude/skills/_agent-workflow-shared/rules.md`, `devices.md`, `credentials.md`, `build-release.md`, `report-format.md`, serta `~/.claude/agents/{coder,reviewer,qa,release}.md`. Skrip: `$AGENT_WORKFLOW_DIR/bin/<skrip>` (`AGENT_WORKFLOW_DIR` diisi seperti di `rules.md`). Setiap panggilan `device-lock.sh`/`device-pick.sh` diawali `AGENT_LOCK_PID=$PPID` di panggilan Bash yang sama.
+Baca dulu (jangan disalin ke sini): `~/.agent-workflow/repo/skills/_shared/rules.md`, `devices.md`, `credentials.md`, `build-release.md`, `report-format.md`, serta `~/.agent-workflow/repo/agents/{coder,reviewer,qa,release}.md`. Skrip: `$AGENT_WORKFLOW_DIR/bin/<skrip>` (`AGENT_WORKFLOW_DIR` diisi seperti di `rules.md`). Setiap panggilan `device-lock.sh`/`device-pick.sh` diawali `AGENT_LOCK_PID=$PPID` di panggilan Bash yang sama.
 
 **Alur** (`--batch` default; terpisah dari `--solo`/`--tim`, boleh digabung):
 - **`--batch`:** semua tiket = satu batch: satu rencana, satu branch batch, **satu build**, QA di build itu. Proses berat jalan **sekali untuk semua tiket**, di titik tunggu langkah 7 dan 9. Tidak ada build, pasang, atau QA per tiket.
@@ -60,7 +60,7 @@ flowchart LR
      | Reviewer | `claude-opus-5-5` | bukan coder tiket itu; baca diff branch tiket, tulis review di PR/MR |
      | QA (2-3) | `claude-sonnet-5-5` | uji build batch |
      | Release | `claude-haiku-5-5` | |
-     Coder tidak boleh `git checkout` branch lain atau pindah ke worktree tiket lain; path worktree disebut di tugas. Tidak aman dibagi → cadangan solo (`rules.md`). Isi tugas: "Ikuti `~/.claude/agents/<peran>.md`", kode tiket, AC/TC, branch, batas file, jatah device/akun, folder laporan. Laporan worker datang lewat pesan teammate.
+     Coder tidak boleh `git checkout` branch lain atau pindah ke worktree tiket lain; path worktree disebut di tugas. Tidak aman dibagi → cadangan solo (`rules.md`). Isi tugas: "Ikuti `~/.agent-workflow/repo/agents/<peran>.md`", kode tiket, AC/TC, branch, batas file, jatah device/akun, folder laporan. Laporan worker datang lewat pesan teammate.
 5. **Kode (TDD) → review:**
    - **Coder** sebelum menulis kode mengirim **satu daftar cek silang** ke SPV: kontrak API yang dipakai (path, method, field, kode galat, status di Matriks env) dan detail desain yang di-slice (layout, spacing, teks, state, dark mode); tunggu jawaban. Commit kecil di branch tiket (pesan menyebut KODE) dan **push rutin** `git push origin <branch tiket>` tiap commit dengan tes lulus, supaya Draft PR/MR selalu terbarui. Coder hanya menyentuh branch tiketnya; branch batch tidak pernah dikerjakan Coder.
    - **Reviewer** membaca diff branch tiket dengan prioritas: (1) **performa ringan + keamanan** (crash, main thread, memori, jaringan berulang; kredensial/token, validasi input, data sensitif di log/storage, otorisasi); (2) **logika sesuai aturan bisnis dan AC** (Acuan tiket). Review ditulis di PR/MR (`gh pr review <n> --comment` / `glab mr note <n>`), tiap putaran satu komentar dengan tabel temuan; ringkasannya dilapor ke SPV.

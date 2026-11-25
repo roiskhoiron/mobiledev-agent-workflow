@@ -1,6 +1,8 @@
 # mobiledev-agent-workflow
 
-Tim agen Claude Code + Orca untuk mengerjakan tiket di proyek mobile (native iOS/Android, KMP): dari cek tiket, menulis kode, uji di device, build, sampai PR/MR dan rilis. Dilengkapi pagar keamanan (`guard.sh`) dan pembersihan disk otomatis.
+Tim agen AI coding (Claude Code, Codex, Gemini CLI, Cursor, OpenCode) + Orca untuk mengerjakan tiket di proyek mobile (native iOS/Android, KMP): dari cek tiket, menulis kode, uji di device, build, sampai PR/MR dan rilis. Dilengkapi pagar keamanan (`guard.sh`) dan pembersihan disk otomatis.
+
+**Coding agent bebas dipilih.** `install.sh` menanyakan agen mana yang dipasangi (satu, beberapa, atau semua) dan scope-nya: **global** (semua project di komputer ini) atau **project** (satu project saja). Fitur penuh (mode `--tim` dengan teammate) tetap paling lengkap di Claude Code; di agen lain `--tim` jatuh ke solo. Detail: [Pasang](docs/pasang.md#pilih-coding-agent-dan-scope).
 
 **Platform tiket tidak ditentukan sejak awal.** Workflow bisa dipakai dengan Jira, GitHub Projects, GitLab Issue Board, atau tanpa platform (manual). Nilai awalnya kosong (`none`): saat perintah pertama di sebuah project, agen **bertanya dulu** platform mana yang dipakai, lalu menyimpannya di memory project. Bingung memilih? Agen menyarankan board bawaan host git project: GitHub Projects (repo di GitHub) atau GitLab Issue Board (repo di GitLab). Detail: [Platform tiket](docs/alur-kerja.md#platform-tiket).
 
@@ -18,7 +20,7 @@ Status: **v1 terpasang**, siap uji coba di tiket nyata.
 
 ## Mulai cepat
 
-Ketik perintah ini di Claude Code, di dalam terminal Orca:
+Ketik perintah ini di coding agent-mu (di Claude Code: `/nama-perintah`; agen lain memanggil skill dengan caranya sendiri), di dalam terminal Orca:
 
 | Perintah | Gunanya | Jalankan dari |
 | --- | --- | --- |

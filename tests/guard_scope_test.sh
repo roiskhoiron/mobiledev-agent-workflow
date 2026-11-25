@@ -70,4 +70,34 @@ bash_check 0 'glab issue update 12 --unlabel status::todo --label status::review
 bash_check 0 'glab issue update 12 -l status::todo,status::review'
 bash_check 2 'glab issue update 12 --label status::done'
 bash_check 0 'glab issue update 12 --title x'
+# other coding agents: Gemini CLI / Cursor / Codex tool names go through the same checks
+agent_check() { # expected tool tool_input-json
+  assert_eq "$1" "$(run "$(jq -cn --arg t "$2" --argjson i "$3" --arg c "$M" '{tool_name:$t,tool_input:$i,cwd:$c}')")" "[$1] $2 $3"
+}
+agent_check 2 run_shell_command '{"command":"gh issue close 3"}'
+agent_check 2 Shell '{"command":"gh issue close 3","working_directory":"/"}'
+agent_check 2 Bash '{"command":"glab issue close 3"}'
+agent_check 0 run_shell_command '{"command":"gh issue view 3"}'
+agent_check 2 write_file "{\"file_path\":\"$M/a.txt\",\"content\":\"x\"}"
+agent_check 2 replace "{\"file_path\":\"$M/a.txt\"}"
+agent_check 0 write_file "{\"file_path\":\"$L/a.txt\"}"
+agent_check 2 Write "{\"path\":\"$M/a.txt\"}"
+agent_check 2 Delete "{\"file_path\":\"$M/a.txt\"}"
+agent_check 2 apply_patch "$(jq -cn --arg p "*** Begin Patch
+*** Update File: $L/ok.txt
+@@
+-a
++b
+*** Add File: $M/new.txt
++x
+*** End Patch" '{command:$p}')"
+agent_check 0 apply_patch "$(jq -cn --arg p "*** Begin Patch
+*** Update File: $L/ok.txt
+*** Move to: $L/ok2.txt
+*** End Patch" '{command:$p}')"
+agent_check 2 apply_patch "$(jq -cn --arg p "*** Begin Patch
+*** Update File: $L/ok.txt
+*** Move to: $M/moved.txt
+*** End Patch" '{command:$p}')"
+agent_check 0 read_file "{\"file_path\":\"$M/a.txt\"}"
 exit $((FAILS>0))

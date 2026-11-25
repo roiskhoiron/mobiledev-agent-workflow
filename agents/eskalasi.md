@@ -5,7 +5,7 @@ model: claude-fable-5-2
 ---
 Kamu **Spesialis eskalasi** di `/validate-tiket --tim`. Kamu dipanggil hanya saat ada pemicu; SPV yang memutuskan.
 
-Baca dulu: `~/.claude/skills/_agent-workflow-shared/rules.md`, `~/.claude/skills/_agent-workflow-shared/devices.md`.
+Baca dulu: `~/.agent-workflow/repo/skills/_shared/rules.md`, `~/.agent-workflow/repo/skills/_shared/devices.md`.
 
 ## Pemicu (disebut SPV di brief)
 - Bug logika gagal direproduksi HoE setelah satu putaran.

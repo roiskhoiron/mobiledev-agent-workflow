@@ -5,7 +5,7 @@ argument-hint: "\"<teks permintaan>\" [--solo|--tim] [lampiran...]"
 ---
 Audit permintaan di `$ARGUMENTS`: teks dalam tanda kutip, flag `--solo`/`--tim` (opsional), lalu path/link lampiran (opsional). Peranmu = **SPV audit**. Audit **hanya-baca**: tidak mengubah repo, tidak membuat/mengomentari/memindah tiket, tidak build/upload. Guard memaksanya selama mode audit menyala.
 
-Baca dulu (jangan disalin ke sini): `~/.claude/skills/_agent-workflow-shared/rules.md`, `devices.md`, `credentials.md`, `report-format.md` (→ "Laporan audit"), `build-release.md`, dan `~/.claude/agents/auditor.md`, `~/.claude/agents/analis.md`. Skrip: `$AGENT_WORKFLOW_DIR/bin/<skrip>`, `AGENT_WORKFLOW_DIR` diisi seperti di `rules.md`.
+Baca dulu (jangan disalin ke sini): `~/.agent-workflow/repo/skills/_shared/rules.md`, `devices.md`, `credentials.md`, `report-format.md` (→ "Laporan audit"), `build-release.md`, dan `~/.agent-workflow/repo/agents/auditor.md`, `~/.agent-workflow/repo/agents/analis.md`. Skrip: `$AGENT_WORKFLOW_DIR/bin/<skrip>`, `AGENT_WORKFLOW_DIR` diisi seperti di `rules.md`.
 
 **Model:** `MODEL=claude-opus-5-5` untuk semua peran (sesi ini dan semua panel worker).
 
@@ -28,7 +28,7 @@ flowchart LR
 3. **Pilih mode** (`--solo`/`--tim` memaksa; tanpa flag → permintaan satu platform dan sempit = solo, selain itu tim).
    - **Solo:** sesi ini menjalankan `auditor.md` lalu `analis.md` sendiri, berurutan.
    - **Tim:** tiap worker = **teammate** (tool Agent dengan `name: "<Nama>-<Label><n>"`, `subagent_type: auditor` atau `analis`, `model: opus`; `rules.md` → Orkestrasi). Teammate otomatis ikut hanya-baca selama mode audit sesi ini aktif (guard mengenali teammate dari sesi SPV-nya).
-     Nama dari tabel "Nama agen" di `rules.md`: Auditor (Cecep, Dadang, Sarip; satu per platform), Analis (Bu Lastri) bila ada lampiran, reproduksi memakai nama QA (Paijo, …) dengan `auditor.md`. Isi tugas: "Ikuti `~/.claude/agents/auditor.md`" (atau `analis.md`), slug, repo + ref versi, pertanyaan yang ditugaskan, jatah device/akun (`device-pick.sh <platform> audit-<slug>-<peran><n>`), path/link lampiran. Temuan datang lewat pesan teammate. Teammate yang tugasnya habis → hentikan.
+     Nama dari tabel "Nama agen" di `rules.md`: Auditor (Cecep, Dadang, Sarip; satu per platform), Analis (Bu Lastri) bila ada lampiran, reproduksi memakai nama QA (Paijo, …) dengan `auditor.md`. Isi tugas: "Ikuti `~/.agent-workflow/repo/agents/auditor.md`" (atau `analis.md`), slug, repo + ref versi, pertanyaan yang ditugaskan, jatah device/akun (`device-pick.sh <platform> audit-<slug>-<peran><n>`), path/link lampiran. Temuan datang lewat pesan teammate. Teammate yang tugasnya habis → hentikan.
 4. **Reproduksi** (bila permintaan menyangkut perilaku aplikasi): device + akun dev/staging sesuai `devices.md` dan `credentials.md`, pasang build yang **sudah ada** untuk versi itu (store/TestFlight/Firebase, cara memilih di `build-release.md`; tidak membangun sendiri, tidak ada → catat "tidak bisa direproduksi di versi itu"), Maestro lalu cadangan per platform (Android CLI → adb; iOS → XCUITest runner, `devices.md`), screenshot bertanda. Permintaan soal dokumen/desain saja → device tidak disentuh.
 5. **Simpulkan:** gabungkan temuan dari `${TMPDIR:-/tmp}/audit/<slug>/*.md`. Akar masalah + keyakinan (**pasti** / **kuat** / **dugaan**), dampak, perkiraan ukuran perbaikan. Klaim tanpa bukti ditulis sebagai dugaan, tidak sebagai fakta.
 6. **Laporan final:** isi semua blok `pending` di dokumen yang sama (`replace`), unggah screenshot, tambah saran tiket (tidak dibuat). Tanpa kredensial.

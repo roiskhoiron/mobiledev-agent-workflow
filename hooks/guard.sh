@@ -1,5 +1,7 @@
 #!/bin/bash
-# Claude Code PreToolUse guard. stdin = hook JSON. exit 0 = allow, exit 2 + stderr = block.
+# PreToolUse guard for coding agents. stdin = hook JSON. exit 0 = allow, exit 2 + stderr = block.
+# Native format = Claude Code (tool_name/tool_input/cwd). Codex, Gemini CLI and Cursor send the same
+# shape with their own tool names (normalized below); OpenCode goes through templates/opencode-guard.js.
 # One check_<tool> function per tool; unknown tools and unparseable input are allowed.
 PATH="$PATH:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
 PROTECTED='main|master|develop'
@@ -424,9 +426,9 @@ check_Bash() {
 
 # Edit/Write/MultiEdit: the primary (main) worktree is read-only once the repo has a linked worktree
 # (Orca pattern); a plain checkout without linked worktrees is editable.
-check_edit() {
-  local f d pd gd cd_
-  f=$(printf '%s' "$input" | "$JQ" -r '.tool_input.file_path // .tool_input.notebook_path // empty' 2>/dev/null)
+check_edit() { # [path] (default: path from the hook input)
+  local f=${1:-} d pd gd cd_
+  [ -n "$f" ] || f=$(printf '%s' "$input" | "$JQ" -r '.tool_input.file_path // .tool_input.notebook_path // .tool_input.path // .tool_input.filePath // empty' 2>/dev/null)
   [ -n "$f" ] || return 0
   [ -n "$PY" ] || block "python3 tidak ditemukan, guard tidak bisa memeriksa path."
   f=$(join_path "$(expand_home "$f")" "$cwd")
@@ -443,6 +445,16 @@ check_edit() {
   pd=$(cd -P "$pd" 2>/dev/null && pwd -P) || return 0
   [ "$pd" = "$gd" ] || return 0
   [ "$(git -C "$d" worktree list --porcelain 2>/dev/null | grep -c '^worktree ')" -gt 1 ] && block "edit file di worktree utama dilarang: $f. Kerjakan di checkout workspace domain (lihat rules.md, Workspace & worktree)."
+  return 0
+}
+
+# Codex apply_patch: every file the patch adds/updates/deletes/moves to goes through check_edit
+check_patch() {
+  local f
+  while IFS= read -r f; do
+    [ -n "$f" ] && check_edit "$f"
+  done < <(printf '%s' "$input" | "$JQ" -r '.tool_input.command // .tool_input.patch // empty' 2>/dev/null |
+    sed -nE 's/^\*\*\* (Add|Update|Delete) File: (.+)$/\2/p; s/^\*\*\* Move to: (.+)$/\1/p')
   return 0
 }
 
@@ -536,9 +548,16 @@ else
   fi
 fi
 
+# other agents' tool names -> Claude Code names (Gemini CLI, Cursor, OpenCode bridge)
+case $tool in
+  run_shell_command|Shell|shell|bash) tool=Bash;;
+  write_file|replace|Delete|edit|write) tool=Edit;;
+esac
+
 case $tool in
   Bash) check_Bash;;
   Edit|Write|MultiEdit|NotebookEdit) check_edit;;
+  apply_patch) check_patch;;
   mcp__claude_ai_Atlassian__*)
     if [ -n "$AUDIT" ]; then
       case $tool in *__create*|*__edit*|*__add*|*__update*|*__transition*) audit_block "$tool";; esac

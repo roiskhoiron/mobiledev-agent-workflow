@@ -18,7 +18,7 @@
 | Spesialis eskalasi | Eyang Wiryo | `claude-fable-5-2` (Fable 5.2), on-demand | `/validate-tiket --tim`: hanya saat pemicu eskalasi | menulis repo/tiket/Docs |
 | PjM | Bu Sumi | sonnet | `/validate-tiket --tim`: tiket terkait, PR/MR terbuka, risiko bentrok | menulis tiket/PR/Docs |
 
-Di mode tim, tiap agen adalah **teammate** Claude Code (fitur *agent teams*). Orca menampilkannya sebagai **panel split** di workspace yang sama (bukan tab baru), dengan label seperti `@Maman-Programmer1` tepat di atas kolom input panel itu. Panel muncul sendiri saat SPV memanggil agen, dan tertutup sendiri saat agen dihentikan. Agen yang dapat tugas lanjutan dikirimi pesan, tidak dipanggil dua kali. Model tiap peran diubah di `agents/<peran>.md`.
+Di mode tim, tiap agen adalah **teammate** Claude Code (fitur *agent teams*; hanya di Claude Code, coding agent lain menjalankan `--tim` sebagai solo). Orca menampilkannya sebagai **panel split** di workspace yang sama (bukan tab baru), dengan label seperti `@Maman-Programmer1` tepat di atas kolom input panel itu. Panel muncul sendiri saat SPV memanggil agen, dan tertutup sendiri saat agen dihentikan. Agen yang dapat tugas lanjutan dikirimi pesan, tidak dipanggil dua kali. Model tiap peran diubah di `agents/<peran>.md`.
 
 > **Syarat mode tim:** sesi utama harus jalan dengan teammate mode. Pilih salah satu: jalankan `claude --teammate-mode auto`, atau sekali saja di Claude Code ketik `/config` → **Teammate mode** → `auto`. Tanpa itu agen bertanya: buka ulang sesi, atau lanjut solo.
 

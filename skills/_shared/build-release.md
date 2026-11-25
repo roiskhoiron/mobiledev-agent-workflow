@@ -14,7 +14,7 @@ Sumber "terakhir" (kosongkan nilai jika sumber tidak tersedia, mis. `asc=`):
 - `tag`: tag git versi terbaru.
 - `project`: `CURRENT_PROJECT_VERSION`/`CFBundleVersion` (iOS) atau `versionCode` (Android).
 
-Exit 0 → pakai angkanya. Exit 2 = salah pakai (argumen/kode tiket tidak valid) → perbaiki perintah. Exit 3 (sumber beda/tidak ada) → berhenti dan tanya dengan ringkasan + `saran:` dari skrip. Nomor yang dikonfirmasi masuk blok `## Catatan agen` untuk di-commit user ke `CLAUDE.md` project (lihat `rules.md`).
+Exit 0 → pakai angkanya. Exit 2 = salah pakai (argumen/kode tiket tidak valid) → perbaiki perintah. Exit 3 (sumber beda/tidak ada) → berhenti dan tanya dengan ringkasan + `saran:` dari skrip. Nomor yang dikonfirmasi masuk blok `## Catatan agen` untuk di-commit user ke file instruksi project (`CLAUDE.md` / `AGENTS.md` / ...; lihat `rules.md`).
 
 ## ID aplikasi
 Build dev memakai ID terpisah berakhiran `.dev` (mis. `com.example.app.dev`) supaya bisa terpasang berdampingan dengan versi beta/prod. Jika project belum punya, tanya dulu sebelum menambah.

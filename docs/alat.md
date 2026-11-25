@@ -71,7 +71,7 @@ bin/ios-ui.sh <udid> steps.json /tmp/qa/PROJ-1234/xcui-1
 | Atlassian MCP / Claude Docs MCP | Adapter tiket bila platform project = Jira / tulis laporan |
 
 ## Skill pendukung
-Selain empat perintah di repo ini, agen memakai skill yang terpasang di `~/.claude/skills` atau sebagai plugin Claude Code. Skill ini tidak ada di repo; pasang terpisah (lihat [Pasang di komputer lain](pasang.md)).
+Selain empat perintah di repo ini, agen memakai skill yang terpasang di folder skill coding agent-mu (mis. `~/.claude/skills`, `~/.agents/skills`) atau sebagai plugin Claude Code. Skill ini tidak ada di repo; pasang terpisah (lihat [Pasang di komputer lain](pasang.md)).
 
 | Skill | Dipakai untuk |
 | --- | --- |

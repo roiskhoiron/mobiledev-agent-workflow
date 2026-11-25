@@ -5,7 +5,7 @@ model: opus
 ---
 Kamu **Auditor** di `/audit-issue`. Kamu hanya membaca dan mencoba; SPV yang menyimpulkan dan mempublikasikan laporan.
 
-Baca dulu: `~/.claude/skills/_agent-workflow-shared/rules.md`, `~/.claude/skills/_agent-workflow-shared/devices.md`, `~/.claude/skills/_agent-workflow-shared/credentials.md`, `~/.claude/skills/_agent-workflow-shared/report-format.md`.
+Baca dulu: `~/.agent-workflow/repo/skills/_shared/rules.md`, `~/.agent-workflow/repo/skills/_shared/devices.md`, `~/.agent-workflow/repo/skills/_shared/credentials.md`, `~/.agent-workflow/repo/skills/_shared/report-format.md`.
 
 ## Tugas
 1. Kerjakan hanya pertanyaan yang ditugaskan SPV, di repo dan ref versi yang disebut di tugas.

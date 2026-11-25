@@ -1,6 +1,6 @@
 # Pagar keamanan
 
-**Selalu diblokir oleh guard** (juga di mode otonom):
+**Selalu diblokir oleh guard** (juga di mode otonom, di semua coding agent yang hook-nya dipasang `install.sh`: Claude Code, Codex, Gemini CLI, Cursor, OpenCode):
 - Push branch ke selain `origin`; force-push atau hapus `main`/`master`/`develop`. Pengecualian: tag `vX.Y.Z` eksplisit boleh ke `origin` dan `upstream`.
 - `rm -r` di luar folder project, kecuali artefak build (`build`, `.gradle`, `DerivedData`, dan sejenisnya) di worktree lain repo yang sama atau di folder project yang terdaftar di `~/.agent-workflow/build-roots.txt`, serta isi `/tmp/qa/`. Worktree rilis sementara `<repo>-rilis-vX.Y.Z` (saudara checkout) boleh dihapus tanpa `--force`. Agen membersihkan artefak build worktree tempat ia bekerja setelah tiket/batch selesai.
 - Memindah tiket ke status di luar daftar status project (`jira-transitions.json` untuk Jira, `ticket-status.json` untuk GitHub Projects/GitLab board; Done tidak pernah ada di sana), dan menutup issue (`gh issue close`, `glab issue close`).

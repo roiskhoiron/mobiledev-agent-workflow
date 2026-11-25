@@ -3,9 +3,9 @@ name: branch-manager
 description: Rilis per versi dari branch integrasi ke branch produksi - tracing tiap commit ke tiket/PR/programmer, laporan rilis di Claude Docs, PR rilis, build live, tag setelah PR rilis di-merge manusia. Dipanggil lewat `/branch-manager --rilis KODE-TIKET`. Use when asked to prepare a production release, release notes, or a release PR; kata kunci - rilis versi, branch manager, release notes, PR rilis, tag versi.
 argument-hint: --rilis KODE-TIKET
 ---
-Siapkan rilis satu versi (`$ARGUMENTS`; `KODE-TIKET` = tiket tempat laporan rilis dikomentari). Sesi ini = **Release (Agen First)**: ikuti `~/.claude/agents/release.md`. Agen mengerjakan semua langkah dulu, lalu bertanya ke user di chat: **Konfirmasi / Tolak / Ikuti rekomendasi agen**. Merge PR tiket per tiket bukan di sini: itu `/rilis-tiket`. Argumen selain `--rilis KODE` (mis. `--hotfix`) → belum ada, berhenti dan tanya.
+Siapkan rilis satu versi (`$ARGUMENTS`; `KODE-TIKET` = tiket tempat laporan rilis dikomentari). Sesi ini = **Release (Agen First)**: ikuti `~/.agent-workflow/repo/agents/release.md`. Agen mengerjakan semua langkah dulu, lalu bertanya ke user di chat: **Konfirmasi / Tolak / Ikuti rekomendasi agen**. Merge PR tiket per tiket bukan di sini: itu `/rilis-tiket`. Argumen selain `--rilis KODE` (mis. `--hotfix`) → belum ada, berhenti dan tanya.
 
-Baca dulu (jangan disalin ke sini): `~/.claude/skills/_agent-workflow-shared/rules.md` (Lokasi: branch project, strategi merge, server API; Workspace & worktree), `build-release.md` (Rilis, Merge PR tiket, Upload), `report-format.md` (Laporan rilis), `credentials.md`. Skrip: `$AGENT_WORKFLOW_DIR/bin/release-trace.sh` (usage + exit code di header skrip). Remote: `origin` = downstream (fork), `upstream` = repo utama.
+Baca dulu (jangan disalin ke sini): `~/.agent-workflow/repo/skills/_shared/rules.md` (Lokasi: branch project, strategi merge, server API; Workspace & worktree), `build-release.md` (Rilis, Merge PR tiket, Upload), `report-format.md` (Laporan rilis), `credentials.md`. Skrip: `$AGENT_WORKFLOW_DIR/bin/release-trace.sh` (usage + exit code di header skrip). Remote: `origin` = downstream (fork), `upstream` = repo utama.
 
 ```mermaid
 flowchart LR

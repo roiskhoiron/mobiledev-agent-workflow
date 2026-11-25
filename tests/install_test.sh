@@ -18,7 +18,7 @@ assert_eq "yes" "$([ -f "$S.bak-agent-workflow" ] && echo yes || echo no)" "back
 assert_eq "0" "$(jq '[.hooks.PreToolUse[]|select(.hooks[0].command|test("guard.sh"))]|length' "$S.bak-agent-workflow")" "second install keeps first (original) backup"
 
 # repo path with a space: hook command runs through a shell
-R="$H/my repo"; mkdir -p "$R"; cp -R "$REPO/install.sh" "$REPO/hooks" "$REPO/skills" "$REPO/agents" "$R/"
+R="$H/my repo"; mkdir -p "$R"; cp -R "$REPO/install.sh" "$REPO/hooks" "$REPO/skills" "$REPO/agents" "$REPO/templates" "$R/"
 H2="$H/home2"; mkdir -p "$H2"
 assert_exit 0 "install from path with space" -- bash "$R/install.sh" --home "$H2"
 assert_exit 0 "install from path with space, run 2" -- bash "$R/install.sh" --home "$H2"

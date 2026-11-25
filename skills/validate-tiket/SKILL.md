@@ -5,7 +5,7 @@ argument-hint: KODE-TIKET... [--solo|--tim]
 ---
 Validasi satu atau lebih tiket (`$ARGUMENTS`). Peranmu = **Validator**; di mode tim kamu juga **SPV** (orchestrator). Tidak menulis kode produk, tidak memindah tiket ke Done.
 
-Baca dulu (jangan disalin ke sini): `~/.claude/skills/_agent-workflow-shared/rules.md`, `devices.md`, `credentials.md`, `report-format.md`, `build-release.md`, dan `~/.claude/agents/validator.md` (langkah rinci per tiket); mode tim juga `~/.claude/agents/{pdm,product-designer,contract-runner,hoe,pjm,eskalasi}.md`. Skrip: `$AGENT_WORKFLOW_DIR/bin/<skrip>`, `AGENT_WORKFLOW_DIR` diisi seperti di `rules.md`.
+Baca dulu (jangan disalin ke sini): `~/.agent-workflow/repo/skills/_shared/rules.md`, `devices.md`, `credentials.md`, `report-format.md`, `build-release.md`, dan `~/.agent-workflow/repo/agents/validator.md` (langkah rinci per tiket); mode tim juga `~/.agent-workflow/repo/agents/{pdm,product-designer,contract-runner,hoe,pjm,eskalasi}.md`. Skrip: `$AGENT_WORKFLOW_DIR/bin/<skrip>`, `AGENT_WORKFLOW_DIR` diisi seperti di `rules.md`.
 
 **Mode:** sesi ini bertindak langsung sebagai Validator/SPV (bukan subagen `validator`), supaya akses platform tiket dan Claude Docs tetap di satu tempat. Tiket berurutan.
 - `--solo` (atau tanpa flag untuk tiket kecil/jelas, satu platform): sesi ini mengerjakan semua langkah sendiri.
@@ -59,7 +59,7 @@ flowchart LR
      | Contract Runner | `claude-sonnet-5-5` | tiket yang menyentuh API; hasil diteruskan ke HoE |
      | HoE | `claude-opus-5-5` | selalu di mode tim |
      | PjM | `claude-sonnet-5-5` | selalu di mode tim |
-     | Spesialis eskalasi | `claude-fable-5-2` (jangan isi `model`: frontmatter yang berlaku) | hanya saat pemicu; dihentikan setelah membalas | Brief: KODE, ringkasan tiket + AC, lokasi dokumen + ref, worktree/repo, jatah device/akun (bug), folder `${TMPDIR:-/tmp}/validate/<KODE>/`. Prompt: "Ikuti `~/.claude/agents/<peran>.md`".
+     | Spesialis eskalasi | `claude-fable-5-2` (jangan isi `model`: frontmatter yang berlaku) | hanya saat pemicu; dihentikan setelah membalas | Brief: KODE, ringkasan tiket + AC, lokasi dokumen + ref, worktree/repo, jatah device/akun (bug), folder `${TMPDIR:-/tmp}/validate/<KODE>/`. Prompt: "Ikuti `~/.agent-workflow/repo/agents/<peran>.md`".
    - Hasil Contract Runner diteruskan ke HoE. Bug UI → Product Designer reproduksi; bug logika/API → HoE.
    - **Eskalasi Product Designer ke opus:** reproduksi bug UI gagal/rumit setelah satu putaran → panggil ulang dengan `model: claude-opus-5-5`.
    - **Spesialis eskalasi (`eskalasi`, fable) hanya bila:** bug logika gagal direproduksi HoE setelah satu putaran; temuan HoE ambigu (bug atau disengaja); tiket berlabel high-risk (pembayaran, autentikasi, perubahan skema data); konflik antar-agen yang tidak bisa kamu selesaikan. Sebut pemicunya di brief.

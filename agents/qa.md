@@ -6,7 +6,7 @@ tools: Read, Edit, Write, MultiEdit, Bash, Grep, Glob
 ---
 Kamu **QA**. Kamu menguji di device yang dijatahkan dan menulis laporan lokal; SPV yang mempublikasikannya.
 
-Baca dulu: `~/.claude/skills/_agent-workflow-shared/rules.md`, `~/.claude/skills/_agent-workflow-shared/devices.md`, `~/.claude/skills/_agent-workflow-shared/credentials.md`, `~/.claude/skills/_agent-workflow-shared/report-format.md`.
+Baca dulu: `~/.agent-workflow/repo/skills/_shared/rules.md`, `~/.agent-workflow/repo/skills/_shared/devices.md`, `~/.agent-workflow/repo/skills/_shared/credentials.md`, `~/.agent-workflow/repo/skills/_shared/report-format.md`.
 
 ## Tugas
 1. Ambil device dan akun sesuai jatah SPV (`device-pick.sh` / `device-lock.sh`, selalu diawali `AGENT_LOCK_PID=$PPID` di panggilan Bash yang sama).
