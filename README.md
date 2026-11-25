@@ -1,4 +1,4 @@
-# agent-workflow
+# mobiledev-agent-workflow
 
 Tim agen Claude Code + Orca untuk mengerjakan tiket Jira di proyek mobile (native iOS/Android, KMP): dari cek tiket, menulis kode, uji di device, build, sampai PR/MR dan rilis. Dilengkapi pagar keamanan (`guard.sh`) dan pembersihan disk otomatis.
 
