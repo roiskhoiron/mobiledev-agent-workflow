@@ -46,4 +46,28 @@ echo 'bukan json' > "$T/st/jira-transitions.json"
 jira 2 PROJ-5 '{"id":"21"}'; grep -q "jalankan setup transisi" "$T/err"; assert_eq 0 $? "invalid config msg"
 rm "$T/st/jira-transitions.json"
 jira 2 PROJ-5 '{"id":"21"}'
+# GitHub Projects / GitLab board: never close issues, status only from ticket-status.json
+bash_check() { # expected command
+  assert_eq "$1" "$(run "$(jq -cn --arg c "$2" '{tool_name:"Bash",tool_input:{command:$c},cwd:"/"}')")" "[$1] bash $2"
+}
+bash_check 2 'gh issue close 12'
+bash_check 2 'glab issue close 12'
+bash_check 2 'cd /x && gh issue delete 12 --yes'
+bash_check 0 'gh issue comment 12 --body hi'
+bash_check 0 'gh issue view 12 --comments'
+bash_check 2 'gh project item-edit --project-id PVT_1 --id I --field-id F --single-select-option-id o2'
+cat > "$T/st/ticket-status.json" <<'J'
+{"github":{"PVT_1":{"allow":["o1","o2"]}},"gitlab":{"g/r":{"allow":["status::todo","status::review"]}}}
+J
+bash_check 0 'gh project item-edit --project-id PVT_1 --id I --field-id F --single-select-option-id o2'
+bash_check 0 'gh project item-edit --project-id=PVT_1 --id I --field-id F --single-select-option-id=o1'
+bash_check 2 'gh project item-edit --project-id PVT_1 --id I --field-id F --single-select-option-id o9'; grep -q "Done hanya dipindah kolega" "$T/err"; assert_eq 0 $? "msg gh Done"
+bash_check 2 'gh project item-edit --project-id PVT_2 --id I --field-id F --single-select-option-id o1'
+bash_check 0 'gh project item-edit --project-id PVT_1 --id I --field-id F --text hi'
+bash_check 2 'gh project item-edit --project-id PVT_1 --id I --field-id F --clear'
+bash_check 2 'gh project item-archive 3 --owner o --id I'
+bash_check 0 'glab issue update 12 --unlabel status::todo --label status::review'
+bash_check 0 'glab issue update 12 -l status::todo,status::review'
+bash_check 2 'glab issue update 12 --label status::done'
+bash_check 0 'glab issue update 12 --title x'
 exit $((FAILS>0))

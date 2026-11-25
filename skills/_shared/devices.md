@@ -42,8 +42,8 @@ AGENT_LOCK_PID=$PPID "$AGENT_WORKFLOW_DIR/bin/device-lock.sh" release ios:<udid>
 ## Device dipakai
 `device-pick.sh` exit 1 = tidak ada device yang cocok bebas. Cek pemilik tiap device yang cocok (`AGENT_LOCK_PID=$PPID "$AGENT_WORKFLOW_DIR/bin/device-lock.sh" who <res>`):
 - Pemilik dari batch/rilis yang sama (KODE-nya ada di daftar tiket kita) → antre: coba lagi tiap 30 detik, tanpa bertanya.
-- Pemilik **tiket Jira lain** atau `human-*` → **tanya user** (juga di mode otonom; teammate lewat SPV, cara di `rules.md`):
-  1. `AGENT_LOCK_PID=$PPID "$AGENT_WORKFLOW_DIR/bin/device-preempt.sh" info <res>` → `owner=… since=<n>m testing=yes|no`. Judul tiket pemilik dari `getJiraIssue <KODE pemilik>`.
+- Pemilik **tiket lain** atau `human-*` → **tanya user** (juga di mode otonom; teammate lewat SPV, cara di `rules.md`):
+  1. `AGENT_LOCK_PID=$PPID "$AGENT_WORKFLOW_DIR/bin/device-preempt.sh" info <res>` → `owner=… since=<n>m testing=yes|no`. Judul tiket pemilik dari baca tiket `<KODE pemilik>` (adapter platform).
   2. Tanya (chat): "Device <res> dipakai **<KODE> — <judul>** (sudah <n> menit, sedang uji: ya/tidak). Tugas kita: **<KODE> — <judul>**. Tunggu atau ambil alih?" Untuk `human-*`: "Device <res> sedang dipakai Anda untuk UAT <KODE>. Tugas kita: **<KODE> — <judul>**. Tunggu atau ambil alih?"
   3. **Tunggu** → antre. **Ambil alih** → `AGENT_LOCK_PID=$PPID "$AGENT_WORKFLOW_DIR/bin/device-preempt.sh" take <res> <owner kita>`: exit 0 = device milik kita; 1 = kunci keburu diambil pihak lain → ulangi dari awal (`device-pick.sh`). Tidak pernah ambil alih tanpa pilihan user.
 - **Uji kita terhenti / guard bilang "diambil alih":** bukan kegagalan tiket. Antre lagi lewat `device-pick.sh`, ulangi uji dari awal, dan tulis di laporan "uji sempat didahulukan untuk <KODE>". Selama diambil alih, guard menolak perintah adb/maestro/`simctl booted` tanpa target: selalu tulis `-s <serial>` / `--device` / udid.
@@ -160,8 +160,8 @@ Build iOS/Android dijalankan satu per satu (RAM terbatas). Kunci `AGENT_LOCK_PID
 **Kunci dipakai** (`acquire` exit 1, stdout = pemilik `<KODE>-<peran><n>`):
 - Pertama `"$AGENT_WORKFLOW_DIR/bin/build-preempt.sh" reap`: exit 0 = kunci terlupa sudah dilepas → `acquire` lagi, tanpa bertanya.
 - Pemilik dari batch/rilis yang sama (KODE-nya ada di daftar tiket kita) → antre: coba lagi tiap 30 detik, tanpa bertanya.
-- Pemilik **tiket Jira lain** → **tanya user** (juga di mode otonom), supaya user memilih prioritas:
-  1. `"$AGENT_WORKFLOW_DIR/bin/build-preempt.sh" info` → `owner=… since=<n>m uploading=yes|no`. Judul tiket pemilik dari `getJiraIssue <KODE pemilik>`.
+- Pemilik **tiket lain** → **tanya user** (juga di mode otonom), supaya user memilih prioritas:
+  1. `"$AGENT_WORKFLOW_DIR/bin/build-preempt.sh" info` → `owner=… since=<n>m uploading=yes|no`. Judul tiket pemilik dari baca tiket `<KODE pemilik>` (adapter platform).
   2. Tanya (chat; teammate lewat SPV, cara di `rules.md`): "`build:heavy` sedang dipakai **<KODE> — <judul>** (<jenis build>, sudah <n> menit). Tugas kita: **<KODE> — <judul>** (<jenis build>). Mana yang didahulukan?" Opsi: **Tunggu** / **Dahulukan <KODE kita>** (build <KODE> dihentikan, diulang otomatis sesudah build kita). `uploading=yes` → jangan tawarkan dahulukan; upload tidak pernah dihentikan, tunggu saja.
   3. **Tunggu** → antre. **Dahulukan** → `AGENT_LOCK_PID=$PPID "$AGENT_WORKFLOW_DIR/bin/build-preempt.sh" take <owner kita>`: exit 0 = kunci milik kita; 3 = keburu upload → tunggu; 1 = diambil agen lain → ulangi dari 1.
 - **Build kita terhenti/gagal:** sebelum menyebutnya gagal, jalankan `build-preempt.sh check <owner kita>`. Exit 0 = didahulukan tiket lain, bukan kegagalan: antre lagi, build ulang dari awal, dan tulis di laporan "build sempat didahulukan untuk <KODE>".

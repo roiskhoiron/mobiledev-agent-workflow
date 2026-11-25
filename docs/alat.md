@@ -11,7 +11,7 @@ Agen memanggilnya sebagai `$AGENT_WORKFLOW_DIR/bin/<skrip>`. Kamu juga boleh men
 | `annotate.py` | Gambar kotak merah + label di screenshot dari koordinat | `uv run --with pillow python3 bin/annotate.py in.png boxes.json out.png` |
 | `build-number.sh` | Tentukan nomor build; exit 3 = sumber tidak sepakat, agen bertanya | `bin/build-number.sh next asc=41 firebase=41 tag=40` |
 | `manifest-check.sh` | Bandingkan tiket di commit sebuah branch dengan daftar tiket (alat bantu, bukan bagian alur rilis) | `bin/manifest-check.sh origin/master origin/<branch> PROJ-1 PROJ-2` |
-| `release-trace.sh` | Lacak tiap commit `primary..protected` ke PR dan tiket Jira (TSV); exit 1 = ada commit tanpa kode, 3 = primary belum terkandung di protected | `bin/release-trace.sh upstream/master upstream/develop PROJ` |
+| `release-trace.sh` | Lacak tiap commit `primary..protected` ke PR dan kode tiket (TSV; prefix apa saja, mis. `PROJ`, `GH`, `GL`); exit 1 = ada commit tanpa kode, 3 = primary belum terkandung di protected | `bin/release-trace.sh upstream/master upstream/develop PROJ` |
 | `build-preempt.sh` | `reap`: lepas `build:heavy` yang lupa dilepas (tidak ada build 20 menit; housekeeping menjalankannya tiap jam). Saat `build:heavy` dipakai tiket lain: `info` (siapa, berapa lama, sedang upload?), `take` (hentikan build itu dan ambil kunci, setelah kamu setuju), `check` (agen yang dihentikan tahu harus build ulang) | `bin/build-preempt.sh info` |
 | `device-preempt.sh` | Ambil alih device yang dikunci agen lain, hanya setelah kamu setuju: `info` (siapa, berapa lama, sedang diuji?), `take` (hentikan proses uji di device itu, tulis catatan untuk pemegang lama, pindahkan kunci) | `bin/device-preempt.sh info android:<serial>` |
 | `uat-watch.sh` | Pantau log app selama slot UAT di HP fisik: catat semua baris dan crash, lepas kunci `human-<KODE>` setelah 3 menit tanpa log; exit 3 = paket Android tidak ketemu atau proses log berhenti (`end=error`), kunci tidak disentuh | `bin/uat-watch.sh android:<serial> <package> human-<KODE> <outdir>` |
@@ -65,10 +65,10 @@ bin/ios-ui.sh <udid> steps.json /tmp/qa/PROJ-1234/xcui-1
 | Android CLI (`android`) | Cadangan Maestro di Android, pasang/jalankan APK, docs Android |
 | Schemathesis | Uji API terhadap spec di repo, hanya dev/staging |
 | Pact | Uji kontrak bila ada kontrak di repo |
-| `gh` / `glab` | Membuat PR (GitHub) / MR (GitLab) |
+| `gh` / `glab` | Membuat PR (GitHub) / MR (GitLab); juga adapter tiket bila platform project GitHub Projects / GitLab Issue Board |
 | Firebase CLI / TestFlight | Upload build dev/beta; prod hanya dengan izin |
 | Orca CLI | Workspace, worktree, panel teammate (lewat plugin agent view Orca) |
-| Atlassian MCP / Claude Docs MCP | Baca & komentar Jira / tulis laporan |
+| Atlassian MCP / Claude Docs MCP | Adapter tiket bila platform project = Jira / tulis laporan |
 
 ## Skill pendukung
 Selain empat perintah di repo ini, agen memakai skill yang terpasang di `~/.claude/skills` atau sebagai plugin Claude Code. Skill ini tidak ada di repo; pasang terpisah (lihat [Pasang di komputer lain](pasang.md)).
@@ -85,14 +85,14 @@ Selain empat perintah di repo ini, agen memakai skill yang terpasang di `~/.clau
 | `kotlin-agent-skills` (plugin) | Migrasi dan performa build Kotlin/KMP (AGP 9, CocoaPods → SPM, Kotlin/Native) |
 
 ## MCP yang dipakai
-MCP = konektor yang membuat Claude bisa memakai layanan luar. Workflow ini memakai dua, keduanya dipasang sebagai konektor di claude.ai:
+MCP = konektor yang membuat Claude bisa memakai layanan luar. Claude Docs selalu dipakai; Atlassian **hanya** bila platform tiket project = Jira (GitHub Projects / GitLab Issue Board lewat `gh`/`glab`, tanpa MCP). Keduanya dipasang sebagai konektor di claude.ai:
 
 | MCP | Gunanya | Dipakai oleh | Fungsi yang dipanggil |
 | --- | --- | --- | --- |
-| **Atlassian** (Jira) | Baca tiket, komentar, pindah status, buat tiket rilis | Validator, SPV, Release, Auditor (baca saja) | `getJiraIssue`, `searchJiraIssuesUsingJql`, `addCommentToJiraIssue`, `transitionJiraIssue`, `getTransitionsForJiraIssue`, `createJiraIssue` + `createIssueLink` (tiket rilis), `atlassianUserInfo` (cek koneksi) |
+| **Atlassian** (Jira, opsional) | Baca tiket, komentar, pindah status, buat tiket rilis | Validator, SPV, Release, Auditor (baca saja) | `getJiraIssue`, `searchJiraIssuesUsingJql`, `addCommentToJiraIssue`, `transitionJiraIssue`, `getTransitionsForJiraIssue`, `createJiraIssue` + `createIssueLink` (tiket rilis), `atlassianUserInfo` (cek koneksi) |
 | **Claude Docs** | Laporan validasi, rencana + test case, laporan uji, laporan audit (bergambar) | Validator, SPV, Planner, `/audit-issue` | `batch` (buat/isi dokumen), unggah screenshot |
 
-Bukan bagian workflow (boleh terpasang, tidak dibutuhkan): GitHub MCP (PR dibuat lewat `gh` CLI), context7 (docs library untuk coding biasa). Guard ikut memeriksa panggilan Atlassian: transisi di luar daftar ditolak, dan di mode audit semua penulisan Jira diblokir.
+Bukan bagian workflow (boleh terpasang, tidak dibutuhkan): GitHub MCP (PR dibuat lewat `gh` CLI), context7 (docs library untuk coding biasa). Guard ikut memeriksa pindah status di semua platform: transisi Jira, `gh project item-edit`, dan label `glab issue update` di luar daftar ditolak; `gh`/`glab issue close` selalu ditolak; di mode audit semua penulisan Jira diblokir.
 
 ## Pembersihan otomatis (`housekeeping.sh`)
 Dijalankan launchd tiap jam (`com.agentworkflow.housekeeping`). Gratis, jalan walau Orca tertutup, tanpa agen Claude.

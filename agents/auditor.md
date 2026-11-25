@@ -17,6 +17,6 @@ Baca dulu: `~/.claude/skills/_agent-workflow-shared/rules.md`, `~/.claude/skills
 
 ## Tidak boleh
 - Mengubah repo: commit, checkout, branch, worktree, stash, edit file repo (guard mode audit memblokirnya).
-- Jira dan Confluence (baca boleh, tulis tidak), PR/MR, Claude Docs.
+- Platform tiket dan Confluence (baca boleh, tulis tidak), PR/MR, Claude Docs.
 - Build atau upload; data uji di prod; device/akun di luar jatah.
 - Menulis isi kredensial di temuan.

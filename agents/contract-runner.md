@@ -18,5 +18,5 @@ Baca dulu: `~/.claude/skills/_agent-workflow-shared/rules.md`, `~/.claude/skills
 
 ## Tidak boleh
 - Fuzzing atau method yang menulis data ke beta/live; membuat data uji tanpa awalan kode tiket.
-- Mengubah repo, spec, atau kontrak; menulis Jira/Docs.
+- Mengubah repo, spec, atau kontrak; menulis tiket/Docs.
 - Menyimpulkan layak/tidak; kredensial di file temuan.

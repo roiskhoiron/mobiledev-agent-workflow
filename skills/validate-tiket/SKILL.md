@@ -1,13 +1,13 @@
 ---
 name: validate-tiket
-description: Validasi tiket Jira sebelum dikerjakan (cek layak, reproduksi bug di device, laporan bergambar di Claude Docs), solo atau tim (PdM, Product Designer, Contract Runner, HoE, PjM, Spesialis eskalasi). Dipanggil lewat `/validate-tiket KODE... [--solo|--tim]`. Use when asked to validate, check feasibility, or reproduce a Jira ticket; kata kunci - validasi tiket, cek tiket, reproduksi bug, layak dikerjakan.
+description: Validasi tiket sebelum dikerjakan (cek layak, reproduksi bug di device, laporan bergambar di Claude Docs), solo atau tim (PdM, Product Designer, Contract Runner, HoE, PjM, Spesialis eskalasi). Dipanggil lewat `/validate-tiket KODE... [--solo|--tim]`. Use when asked to validate, check feasibility, or reproduce a ticket; kata kunci - validasi tiket, cek tiket, reproduksi bug, layak dikerjakan.
 argument-hint: KODE-TIKET... [--solo|--tim]
 ---
-Validasi satu atau lebih tiket Jira (`$ARGUMENTS`). Peranmu = **Validator**; di mode tim kamu juga **SPV** (orchestrator). Tidak menulis kode produk, tidak memindah tiket ke Done.
+Validasi satu atau lebih tiket (`$ARGUMENTS`). Peranmu = **Validator**; di mode tim kamu juga **SPV** (orchestrator). Tidak menulis kode produk, tidak memindah tiket ke Done.
 
 Baca dulu (jangan disalin ke sini): `~/.claude/skills/_agent-workflow-shared/rules.md`, `devices.md`, `credentials.md`, `report-format.md`, `build-release.md`, dan `~/.claude/agents/validator.md` (langkah rinci per tiket); mode tim juga `~/.claude/agents/{pdm,product-designer,contract-runner,hoe,pjm,eskalasi}.md`. Skrip: `$AGENT_WORKFLOW_DIR/bin/<skrip>`, `AGENT_WORKFLOW_DIR` diisi seperti di `rules.md`.
 
-**Mode:** sesi ini bertindak langsung sebagai Validator/SPV (bukan subagen `validator`), supaya akses Jira dan Claude Docs tetap di satu tempat. Tiket berurutan.
+**Mode:** sesi ini bertindak langsung sebagai Validator/SPV (bukan subagen `validator`), supaya akses platform tiket dan Claude Docs tetap di satu tempat. Tiket berurutan.
 - `--solo` (atau tanpa flag untuk tiket kecil/jelas, satu platform): sesi ini mengerjakan semua langkah sendiri.
 - `--tim` (tanpa flag: tiket fitur yang menyentuh bisnis + desain + API, atau bug lintas platform): langkah 4 dibagi ke teammate, lihat "Mode tim".
 
@@ -16,21 +16,21 @@ flowchart LR
   P[Prasyarat] --> B[Baca tiket] --> J{Bug?}
   J -- ya --> R[Reproduksi + screenshot] --> L[Laporan Docs]
   J -- fitur --> C[Cek requirement/API/desain] --> L
-  L --> K[Komentar Jira] --> G{Layak?}
+  L --> K[Komentar tiket] --> G{Layak?}
   G -- ya --> I[In Progress]
   G -- tidak --> T[Tetap Todo]
 ```
 
 ## Langkah
 1. **Prasyarat (sekali, sebelum tiket pertama):**
-   - Atlassian MCP terjangkau (`mcp__claude_ai_Atlassian__atlassianUserInfo`); gagal → berhenti, lapor ke user.
-   - `~/.agent-workflow/jira-transitions.json` ada entri project tiket; belum → jalankan "Setup transisi Jira" di `rules.md` (berhenti & tanya user untuk memilih id).
+   - Adapter platform terjangkau (cek koneksi di tabel `rules.md` → Platform tiket; Jira: `mcp__claude_ai_Atlassian__atlassianUserInfo`); gagal → berhenti, lapor ke user.
+   - Checklist **Platform tiket** di `rules.md` lulus (platform belum ada di memory project → berhenti & tanya user dulu); daftar status project ada (`jira-transitions.json` / `ticket-status.json`); belum → jalankan "Setup status tiket" di `rules.md` (berhenti & tanya user untuk memilih id/label; tanpa platform → lewati).
    - Ada tiket bug → device lewat `device-pick.sh` (lihat `devices.md`); setiap panggilan `device-lock.sh`/`device-pick.sh` diawali `AGENT_LOCK_PID=$PPID` di panggilan Bash yang sama. Semua sibuk → tunggu, jangan pakai device lain.
    - Akun uji: cari sesuai `credentials.md`; tidak ditemukan → berhenti & tanya (aturan "Selalu berhenti dan tanya" di `rules.md`).
    - **Sinkron sumber (sekali per sesi):** lokasi dokumen business discovery, desain/mockup, kontrak API, blueprint dari memory project (`rules.md` → Lokasi; belum ada → tanya user, simpan). Repo yang sama dengan kode → `git fetch upstream` lalu baca dari `upstream/<protected>` (branch project dari memory, `rules.md` → Lokasi) tanpa checkout; repo dokumen terpisah → `git pull` di checkout dokumen itu (bukan worktree primary). Lalu `graphify update` bila project memakai graphify. Catat ref yang dibaca di laporan.
 2. **Per tiket, berurutan.** Ulangi 3–8 untuk tiap KODE; satu laporan per tiket.
-3. **Baca** tiket, komentar, dan link terkait lewat `mcp__claude_ai_Atlassian__getJiraIssue`. Catat AC dan versi yang tertulis.
-   **Deteksi jejak** (tiap tiket): branch `git branch -r --list 'origin/*/<KODE>*' | grep -E '/<KODE>(-r[0-9]+)?$' | grep -vE 'origin/(un)?revert/'`, PR/MR `gh pr list --state all --search <KODE>` / `glab mr list --all --search <KODE>`, dan komentar Jira berisi laporan uji/rencana agen. Ada salah satunya → **mode validasi ulang** (tiket kembali ke Todo): baca penolakan sejak putaran terakhir = komentar arahan QA di Jira (dari `/rilis-tiket`) + komentar review PR/MR manusia, lalu **golongkan** tiap poin:
+3. **Baca** tiket, komentar, dan link terkait lewat adapter platform (`rules.md` → Platform tiket; Jira: `mcp__claude_ai_Atlassian__getJiraIssue`). Catat AC dan versi yang tertulis.
+   **Deteksi jejak** (tiap tiket): branch `git branch -r --list 'origin/*/<KODE>*' | grep -E '/<KODE>(-r[0-9]+)?$' | grep -vE 'origin/(un)?revert/'`, PR/MR `gh pr list --state all --search <KODE>` / `glab mr list --all --search <KODE>`, dan komentar tiket berisi laporan uji/rencana agen. Ada salah satunya → **mode validasi ulang** (tiket kembali ke Todo): baca penolakan sejak putaran terakhir = komentar arahan QA di tiket (dari `/rilis-tiket`) + komentar review PR/MR manusia, lalu **golongkan** tiap poin:
    | Golongan | Tindakan |
    |---|---|
    | **Implementasi meleset** (requirement tetap) | Keputusan **Layak**; daftar revisi masuk "Yang ditolak" |
@@ -42,14 +42,14 @@ flowchart LR
    **Aturan keputusan** (temuan PdM/PjM/HoE atau pemeriksaanmu sendiri):
    | Kondisi | Keputusan | Tindakan |
    |---|---|---|
-   | Informasi minim, AC inti jelas | Layak dengan catatan | Pertanyaan di komentar Jira untuk reporter |
+   | Informasi minim, AC inti jelas | Layak dengan catatan | Pertanyaan di komentar tiket untuk reporter |
    | Informasi minim, AC inti kabur | Tidak layak | Tetap Todo; komentar berisi daftar yang harus dilengkapi |
    | Bertabrakan dengan tiket/dokumen lain | Tidak layak sampai diputuskan | Komentar menyebut kedua tiket + titik tabrakan (kutipan); tanya user mana yang berlaku |
    | Tumpang tindih tapi selaras | Layak dengan catatan | Saran urutan pengerjaan atau penggabungan |
 5. **Screenshot bertanda:** ambil bounds dari `maestro hierarchy` atau `-frames.json` XCUITest (bukan ditebak), lalu `$AGENT_WORKFLOW_DIR/bin/annotate.py`. File kerja hanya di `${TMPDIR:-/tmp}/validate/<KODE>/`, bukan di repo.
 6. **Laporan** di Claude Docs sesuai `report-format.md`; unggah screenshot. Tanpa kredensial (sebut nama kunci saja). **Validasi ulang:** laporan berbentuk **delta**: apa yang berubah dibanding validasi sebelumnya (link laporan lama) + bagian **Yang ditolak** (tiap poin: sumber komentar, golongan, saran tugas/TC). Lalu dikomentari dan ditransisikan seperti biasa.
-7. **Komentar Jira** (`addCommentToJiraIssue`): baris pertama = link laporan, lalu keputusan: **Layak** / **Layak dengan catatan** / **Tidak layak** + alasan singkat.
-8. **Transisi:** Layak / Layak dengan catatan → `transitionJiraIssue` ke In Progress dengan id dari `jira-transitions.json`. Tidak layak → tetap Todo. Lepas kunci device/akun (`AGENT_LOCK_PID=$PPID ... device-lock.sh release ...`).
+7. **Komentar tiket** (adapter platform): baris pertama = link laporan, lalu keputusan: **Layak** / **Layak dengan catatan** / **Tidak layak** + alasan singkat.
+8. **Transisi:** Layak / Layak dengan catatan → pindah status ke In Progress (adapter platform, id/label dari daftar status project). Tidak layak → tetap Todo. Lepas kunci device/akun (`AGENT_LOCK_PID=$PPID ... device-lock.sh release ...`).
 9. **Mode tim** (menggantikan langkah 4–5, SPV tetap menulis laporan, komentar, transisi):
    - Panggil teammate paralel (tool Agent, `name` dari tabel "Nama agen" di `rules.md`, `subagent_type` = peran, `model` dari tabel): PdM, Product Designer (tiket UI/bug UI), Contract Runner (tiket menyentuh API), HoE, PjM.
      | Peran | Model | Catatan |

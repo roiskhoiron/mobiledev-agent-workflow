@@ -3,34 +3,34 @@ name: branch-manager
 description: Rilis per versi dari branch integrasi ke branch produksi - tracing tiap commit ke tiket/PR/programmer, laporan rilis di Claude Docs, PR rilis, build live, tag setelah PR rilis di-merge manusia. Dipanggil lewat `/branch-manager --rilis KODE-TIKET`. Use when asked to prepare a production release, release notes, or a release PR; kata kunci - rilis versi, branch manager, release notes, PR rilis, tag versi.
 argument-hint: --rilis KODE-TIKET
 ---
-Siapkan rilis satu versi (`$ARGUMENTS`; `KODE-TIKET` = tiket Jira tempat laporan rilis dikomentari). Sesi ini = **Release (Agen First)**: ikuti `~/.claude/agents/release.md`. Agen mengerjakan semua langkah dulu, lalu bertanya ke user di chat: **Konfirmasi / Tolak / Ikuti rekomendasi agen**. Merge PR tiket per tiket bukan di sini: itu `/rilis-tiket`. Argumen selain `--rilis KODE` (mis. `--hotfix`) → belum ada, berhenti dan tanya.
+Siapkan rilis satu versi (`$ARGUMENTS`; `KODE-TIKET` = tiket tempat laporan rilis dikomentari). Sesi ini = **Release (Agen First)**: ikuti `~/.claude/agents/release.md`. Agen mengerjakan semua langkah dulu, lalu bertanya ke user di chat: **Konfirmasi / Tolak / Ikuti rekomendasi agen**. Merge PR tiket per tiket bukan di sini: itu `/rilis-tiket`. Argumen selain `--rilis KODE` (mis. `--hotfix`) → belum ada, berhenti dan tanya.
 
 Baca dulu (jangan disalin ke sini): `~/.claude/skills/_agent-workflow-shared/rules.md` (Lokasi: branch project, strategi merge, server API; Workspace & worktree), `build-release.md` (Rilis, Merge PR tiket, Upload), `report-format.md` (Laporan rilis), `credentials.md`. Skrip: `$AGENT_WORKFLOW_DIR/bin/release-trace.sh` (usage + exit code di header skrip). Remote: `origin` = downstream (fork), `upstream` = repo utama.
 
 ```mermaid
 flowchart LR
   F[fetch + cek leluhur] --> T[Tracing commit] --> C[Cek Done + Matriks env live]
-  C --> RG[Regresi penuh di build beta] --> D[Docs + komentar Jira] --> P[PR rilis] --> Q{User}
+  C --> RG[Regresi penuh di build beta] --> D[Docs + komentar tiket] --> P[PR rilis] --> Q{User}
   Q -- Tolak --> S[Berhenti]
   Q -- Keluarkan tiket X --> R[PR revert] --> F
-  Q -- Konfirmasi --> B[Build live] --> SM[Smoke live] --> W[Manusia merge PR rilis] --> G[Tag vX.Y.Z] --> U[Perbarui Docs + Jira]
+  Q -- Konfirmasi --> B[Build live] --> SM[Smoke live] --> W[Manusia merge PR rilis] --> G[Tag vX.Y.Z] --> U[Perbarui Docs + tiket]
 ```
 
 ## Langkah
-0. **Prasyarat (sekali):** Atlassian MCP terjangkau (`mcp__claude_ai_Atlassian__atlassianUserInfo`); `gh`/`glab` login; `<primary>`, `<protected>`, prefix kode Jira, server live, dan strategi merge dari memory project (`rules.md` → Lokasi; belum ada → tanya, simpan). Upstream hanya mengizinkan squash → berhenti dan tanya (PR rilis wajib merge commit).
+0. **Prasyarat (sekali):** checklist **Platform tiket** di `rules.md` lulus (belum → tanya user dulu); `gh`/`glab` login; `<primary>`, `<protected>`, format kode tiket, server live, dan strategi merge dari memory project (`rules.md` → Lokasi; belum ada → tanya, simpan). Upstream hanya mengizinkan squash → berhenti dan tanya (PR rilis wajib merge commit).
 1. **Fetch + cek leluhur:** `git fetch upstream origin`, lalu `release-trace.sh upstream/<primary> upstream/<protected> <PREFIX>...`. Exit 3 (hotfix belum di-back-merge ke `<protected>`) → berhenti dan tanya. Exit 2 → perbaiki ref/nama branch (cek memory), ulangi. Exit 0/1 → simpan TSV untuk langkah 3, dan catat **`<sha-rilis>`** = `git rev-parse upstream/<protected>` saat itu (yang dilacak = yang dibuild = yang di-tag; ditulis di laporan Docs dan isi PR rilis).
 2. **Versi `vX.Y.Z`:** dari `KODE-TIKET` atau file versi project. Tidak jelas, atau tag sudah ada (`git ls-remote --tags upstream vX.Y.Z`) → tanya. Tag tidak pernah ditimpa.
 3. **Tracing** tiap baris TSV (`sha7 pr kode author subject`):
    - PR/MR asal (`<N>` = kolom `pr` tanpa `#`/`!`): `gh pr view <N> --repo <upstream> --json headRefName,author,url,title` / `glab mr view <N> -R <upstream>`. Baris `pr=-` → `gh api repos/<upstream>/commits/<sha>/pulls` / `glab api projects/<id>/repository/commits/<sha>/merge_requests`; tetap tidak ketemu → tandai.
    - KODE: kolom `kode`; `-` → coba judul PR lalu nama branch (`headRefName`); tetap tidak ada → **commit tak terlacak**.
    - Programmer = pembuat PR/MR + author commit (beda → tulis keduanya).
-   - Status Jira tiap KODE: `getJiraIssue`.
+   - Status tiket tiap KODE: baca tiket (adapter platform).
    - Baris PR revert (`revert: <KODE-X> keluar dari rilis ...`) dan pasangan revert-dari-revert-nya → dicatat **"dikeluarkan"**, bukan isi rilis.
 4. **Cek isi:** tiket belum **Done** atau commit tak terlacak → tandai, masuk rekomendasi (mis. keluarkan tiket X, tunda rilis, minta kolega memindah ke Done).
 5. **Matriks env live** untuk endpoint semua tiket (method aman saja, seperti `/develop-tiket` langkah 3; tanpa izin per run, tanpa kunci device). **Belum ada** / **Beda kontrak** → tandai, masuk rekomendasi.
 5b. **Regresi penuh di beta** (gerbang utama sebelum manusia ditanya): buat worktree rilis `git -C <checkout> worktree add --detach ../<repo>-rilis-vX.Y.Z <sha-rilis>` (dipakai lagi di langkah 9), kunci `build:heavy`, build **beta variant** Android + iOS untuk dipasang di device (tanpa upload), lepas kunci. Panggil **QA** (`qa.md`, mode regresi penuh) dengan suite dari memory project (`rules.md` → Lokasi; belum ada → tanya, simpan), jatah device + akun uji lewat `device-pick.sh`/`device-lock.sh` (owner `rilis-vX.Y.Z-qa<n>`). Data uji berawalan `vX.Y.Z`. Flow gagal → cocokkan dengan tiket yang menyentuh modulnya (tabel tracing), masuk rekomendasi (keluarkan tiket X / tunda rilis). Suite kosong → tulis "belum ada suite regresi" sebagai risiko di rekomendasi, jangan dianggap lulus.
 6. **Claude Docs `Perubahan rilis vX.Y.Z`** sesuai `report-format.md` → Laporan rilis (mermaid, versi + hash ref termasuk `<sha-rilis>`, tabel perubahan, tak terlacak/belum Done, Matriks env live, hasil regresi beta, rekomendasi).
-7. **Komentar di `KODE-TIKET`** (`addCommentToJiraIssue`, format yang sama): baris pertama link dokumen, lalu versi, jumlah perubahan, rekomendasi. `KODE-TIKET` tidak ditransisikan.
+7. **Komentar di `KODE-TIKET`** (komentar tiket lewat adapter platform, format yang sama): baris pertama link dokumen, lalu versi, jumlah perubahan, rekomendasi. `KODE-TIKET` tidak ditransisikan.
 8. **PR rilis** (tanpa push branch). Isi (file sementara `<body>`): link dokumen, `<sha-rilis>`, tabel perubahan, catatan **"merge dengan merge commit, bukan squash"**. Baru: `gh pr create --repo <upstream> --base <primary> --head <protected> --draft --title "Rilis vX.Y.Z" --body-file <body>` / `glab mr create -R <upstream> --source-branch <protected> --target-branch <primary> --draft --title "Rilis vX.Y.Z" --description "$(cat <body>)"`. Sudah ada → `gh pr edit <N> --repo <upstream> --title "Rilis vX.Y.Z" --body-file <body>` / `glab mr update <N> -R <upstream> --title "Rilis vX.Y.Z" --description "$(cat <body>)"`.
 
 **Tanya user** (ringkasan + hasil regresi + rekomendasi + link dokumen dan PR rilis): **Konfirmasi / Tolak / Ikuti rekomendasi agen**.
@@ -51,7 +51,7 @@ Ringkasan ke user:
 **Larangan:** agen tidak pernah merge PR rilis, push branch ke `upstream`, menimpa tag, atau memindah tiket ke Done.
 
 ## Berhenti lebih awal / galat
-- Atlassian MCP atau `gh`/`glab` tidak terjangkau, `<primary>`/`<protected>` belum jelas → berhenti dan tanya.
+- Platform tiket belum dipilih / adapternya atau `gh`/`glab` tidak terjangkau, `<primary>`/`<protected>` belum jelas → berhenti dan tanya.
 - `release-trace.sh` exit 3 → back-merge hotfix dulu (manusia); jangan membuat PR rilis.
 - Regresi/smoke tidak bisa jalan (device/akun uji tidak ada) → tulis Tertahan + alasan di laporan dan rekomendasi; jangan dianggap lulus.
 - Build terhenti/dibatalkan → lepas kunci `build:heavy` (`release build:heavy <owner>`) dan hapus worktree rilis sebelum lapor.

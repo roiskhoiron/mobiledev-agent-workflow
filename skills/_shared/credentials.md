@@ -1,6 +1,6 @@
 # Akun uji dan kredensial
 
-Isi kredensial **tidak pernah** ditulis ke Claude Docs, Jira, PR/MR, commit, log laporan, atau `CLAUDE.md`. Di laporan cukup sebut nama kunci (mis. `qa.user1`).
+Isi kredensial **tidak pernah** ditulis ke Claude Docs, tiket, PR/MR, commit, log laporan, atau `CLAUDE.md`. Di laporan cukup sebut nama kunci (mis. `qa.user1`).
 
 ## Urutan cari
 1. `local.properties` → kunci `qa.*`

@@ -55,7 +55,7 @@ Satu dokumen per audit, dibuat di awal audit dengan blok `pending` per bagian, l
 4. **Perbandingan lampiran vs kode vs layar** (bila ada lampiran): tabel `Lampiran | Kode | Layar | Beda?`.
 5. **Akar masalah** + tingkat keyakinan (**pasti** / **kuat** / **dugaan**), dampak, perkiraan ukuran perbaikan.
 6. **Saran langkah berikutnya**.
-7. **Saran tiket Jira** (opsional, tidak dibuat): judul, deskripsi, AC, platform.
+7. **Saran tiket** (opsional, tidak dibuat): judul, deskripsi, AC, platform.
 8. **Cara audit**: versi/ref dan build yang diperiksa, device, alat yang dipakai, hal yang tidak bisa diperiksa (termasuk: guard tidak menangkap tulis lewat shell).
 
 ## Screenshot bertanda
@@ -63,7 +63,7 @@ Satu dokumen per audit, dibuat di awal audit dengan blok `pending` per bagian, l
 - Label = kode AC + penjelasan singkat, mis. `AC2 pesan galat tampil`.
 - Satu hal penting per kotak; nama file urut: `TC1-01.png`, `TC1-02.png`.
 
-## Komentar Jira
+## Komentar tiket
 Ditulis seperti rekan satu tim yang sopan, dan bisa dipahami pembaca awam (PM, QA, bisnis), bukan hanya developer.
 
 **Gaya**
@@ -97,7 +97,7 @@ Aplikasi versi uji: <link Firebase> · Perubahan kode: <link PR>
 Kalau ada yang kurang pas, tinggal kabari aku, nanti aku perbaiki. Terima kasih sudah meluangkan waktu!
 ```
 
-Kirim lewat `mcp__claude_ai_Atlassian__addCommentToJiraIssue`.
+Kirim lewat adapter platform (`rules.md` → Platform tiket; Jira: `mcp__claude_ai_Atlassian__addCommentToJiraIssue`). Tanpa platform → tulis komentarnya di chat untuk user.
 
 ## Laporan rilis (/branch-manager)
 Dokumen Claude Docs berjudul `Perubahan rilis vX.Y.Z`. Urutan isi:
@@ -111,7 +111,7 @@ Dokumen Claude Docs berjudul `Perubahan rilis vX.Y.Z`. Urutan isi:
 2. Versi + ref asal (hash `<primary>` dan `<protected>`).
 3. Tabel per perubahan:
 
-| KODE | Ringkasan | Branch | PR/MR | Programmer | Status Jira |
+| KODE | Ringkasan | Branch | PR/MR | Programmer | Status tiket |
 |---|---|---|---|---|---|
 
 4. Commit tak terlacak (tanpa tiket) dan tiket belum Done: ditandai.
@@ -120,4 +120,4 @@ Dokumen Claude Docs berjudul `Perubahan rilis vX.Y.Z`. Urutan isi:
 7. Rekomendasi agen.
 8. Build + server API (nama server + base URL live), hasil smoke live, link PR rilis, tag (diisi setelah ada).
 
-Komentar Jira di tiket rilis: baris pertama link dokumen, lalu ringkasan versi, jumlah perubahan, dan rekomendasi.
+Komentar tiket di tiket rilis: baris pertama link dokumen, lalu ringkasan versi, jumlah perubahan, dan rekomendasi.

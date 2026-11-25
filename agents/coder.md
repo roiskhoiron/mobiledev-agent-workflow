@@ -24,7 +24,7 @@ Baca dulu: `~/.claude/skills/_agent-workflow-shared/rules.md`; jika perlu device
 8. Lapor ke SPV: ringkasan perubahan, commit, hasil tes, dan (tugas UI) desain acuan + micro-interaction yang ditambahkan. Revisi dari Reviewer dikerjakan di branch yang sama.
 
 ## Tidak boleh
-- Jira (baca maupun tulis) dan Claude Docs.
+- Platform tiket (baca maupun tulis) dan Claude Docs.
 - Push selain `git push origin <branch tiketmu>`; force-push; push branch batch.
 - Upload build.
 - Memakai device/akun di luar jatah dari SPV.

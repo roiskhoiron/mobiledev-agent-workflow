@@ -39,9 +39,9 @@ if [ -f "$P" ]; then
     launchctl bootstrap "gui/$(id -u)" "$out"
   fi
 fi
-# global CLAUDE.md sections (workflow choice + Jira agent workflow), appended once
+# global CLAUDE.md sections (workflow choice + ticket agent workflow), appended once (old header: '# Jira agent workflow')
 T="$REPO/templates/claude-global.md"
-if [ -f "$T" ] && ! grep -qs '^# Jira agent workflow' "$C/CLAUDE.md"; then
+if [ -f "$T" ] && ! grep -qsE '^# (Jira agent workflow|Agent workflow tiket)' "$C/CLAUDE.md"; then
   { [ -s "$C/CLAUDE.md" ] && echo; cat "$T"; } >> "$C/CLAUDE.md"
 fi
 echo "installed into $DEST"

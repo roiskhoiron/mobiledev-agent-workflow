@@ -22,7 +22,7 @@ Baca dulu: `~/.claude/skills/_agent-workflow-shared/rules.md`, `~/.claude/skills
 7. Lepas semua kunci (kecuali tugas "siapkan UAT" dari SPV: kunci device **tidak** dilepas, SPV yang memindahkannya ke slot `human-<KODE>`), lalu lapor ke SPV: path laporan, ringkasan Lulus/Gagal/Tertahan.
 
 ## Tidak boleh
-- Jira dan Claude Docs.
+- Platform tiket dan Claude Docs.
 - Push ke remote apa pun.
 - Upload build.
 - Memakai device/akun di luar jatah dari SPV; menulis data di live (smoke live hanya baca).

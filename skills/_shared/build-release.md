@@ -52,7 +52,7 @@ Agen hanya merge PR tiket ke `<protected>` bila **semua** syarat ini lolos; gaga
 
 | Syarat | Cara cek |
 |---|---|
-| Tiket Done dan punya PR/MR | Jira + `gh pr list` / `glab mr list` |
+| Tiket Done dan punya PR/MR | Tiket + `gh pr list` / `glab mr list` |
 | PR/MR approved | `gh pr view` / `glab mr view` |
 | CI hijau | status check PR/MR |
 | Isi diff sesuai tiket | baca diff vs AC; `manifest-check.sh <base> <head> KODE...` bila perlu |
@@ -80,5 +80,5 @@ flowchart LR
 - Tiket itu Done lagi → buat PR **revert dari revert** (branch `unrevert/<KODE>-<n>`, `<n>` sama dengan revert terakhir) dulu sebelum dihitung masuk rilis berikutnya. Lewati bila PR merged `unrevert/<KODE>-<n>` untuk `<n>` tertinggi sudah ada.
 - Hotfix: sementara manual dengan bertanya (`--hotfix` belum ada). Dua fix bentrok → berhenti dan tanya.
 
-## Jira setelah rilis
+## Tiket setelah rilis
 Komentar (baris pertama link laporan) berisi link build dan PR/MR, lalu geser ke Ready To Review. Done hanya oleh kolega.

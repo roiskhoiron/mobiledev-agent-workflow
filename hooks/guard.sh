@@ -409,7 +409,8 @@ check_Bash() {
           esac;;
         git) GSUB_OFF=-1; check_git "${w[@]:$((i+1))}"; gsub=$((i + 1 + GSUB_OFF));;
         orca) check_orca "${w[@]:$((i+1))}";;
-        glab) [ -n "$AUDIT" ] && check_forge "${w[@]:$((i+1))}";;
+        gh) check_ticket_cli gh "${w[@]:$((i+1))}";;
+        glab) check_ticket_cli glab "${w[@]:$((i+1))}"; [ -n "$AUDIT" ] && check_forge "${w[@]:$((i+1))}";;
         rm) [ $i -eq $gsub ] || check_rm "${w[@]:$((i+1))}";;
         ANDROID_SERIAL=*) es=${w[$i]#*=};;
         adb|xcrun|android|maestro) dev=1; check_device "$c" "$es" "${w[@]:$((i+1))}";;
@@ -442,6 +443,48 @@ check_edit() {
   pd=$(cd -P "$pd" 2>/dev/null && pwd -P) || return 0
   [ "$pd" = "$gd" ] || return 0
   [ "$(git -C "$d" worktree list --porcelain 2>/dev/null | grep -c '^worktree ')" -gt 1 ] && block "edit file di worktree utama dilarang: $f. Kerjakan di checkout workspace domain (lihat rules.md, Workspace & worktree)."
+  return 0
+}
+
+# ticket status on GitHub Projects / GitLab boards (Jira: check_jira). Agents never close issues (= Done);
+# status changes only to option ids (GitHub) / labels (GitLab) in ${AGENT_WORKFLOW_STATE:-~/.agent-workflow}/ticket-status.json
+# shortcut: GitLab labels are checked against the union of all gitlab projects; status changes via `api` aren't parsed
+check_ticket_cli() {
+  local forge=$1; shift
+  local cfg=${AGENT_WORKFLOW_STATE:-$HOME/.agent-workflow}/ticket-status.json a prev='' pid='' opt='' labels=()
+  case "${1:-} ${2:-}" in
+    'issue close'|'issue delete') block "$forge issue ${2} dilarang: Done/tutup issue hanya oleh manusia.";;
+    'project item-edit'|'project item-archive'|'project item-delete')
+      [ "$forge" = gh ] || return 0
+      [ "${2}" = item-edit ] || block "gh project ${2} dilarang: kolom board hanya dipindah lewat item-edit ke status yang diizinkan."
+      for a in "${@:3}"; do
+        case $prev in --project-id) pid=$a;; --single-select-option-id) opt=$a;; esac
+        case $a in --project-id=*) pid=${a#*=};; --single-select-option-id=*) opt=${a#*=};; --clear) block "gh project item-edit --clear dilarang.";; esac
+        prev=$a
+      done
+      [ -n "$opt" ] || return 0   # non-status fields (text/number/date) pass
+      "$JQ" -e type "$cfg" >/dev/null 2>&1 || block "daftar status tiket tidak ada/rusak ($cfg). Minta user: jalankan setup status tiket."
+      "$JQ" -e --arg p "$pid" '.github // {} | has($p)' "$cfg" >/dev/null 2>&1 || block "project '$pid' belum punya daftar status. Minta user: jalankan setup status tiket."
+      "$JQ" -e --arg p "$pid" --arg o "$opt" '.github[$p].allow // [] | map(tostring) | index($o) != null' "$cfg" >/dev/null 2>&1 ||
+        block "status '$opt' tidak diizinkan untuk project $pid. Done hanya dipindah kolega; pindahkan hanya ke status yang ada di daftar allow.";;
+    'issue update')
+      [ "$forge" = glab ] || return 0
+      for a in "${@:3}"; do
+        case $prev in -l|--label) labels+=("$a");; esac
+        case $a in --label=*) labels+=("${a#*=}");; esac
+        prev=$a
+      done
+      [ ${#labels[@]} -gt 0 ] || return 0
+      "$JQ" -e type "$cfg" >/dev/null 2>&1 || block "daftar status tiket tidak ada/rusak ($cfg). Minta user: jalankan setup status tiket."
+      local l x
+      for l in "${labels[@]}"; do
+        IFS=, read -ra xs <<< "$l"
+        for x in "${xs[@]}"; do
+          "$JQ" -e --arg l "$x" '[.gitlab // {} | .[] | .allow // [] | .[]] | index($l) != null' "$cfg" >/dev/null 2>&1 ||
+            block "label '$x' tidak ada di daftar status GitLab. Done hanya dipindah kolega; pakai label status yang diizinkan."
+        done
+      done;;
+  esac
   return 0
 }
 

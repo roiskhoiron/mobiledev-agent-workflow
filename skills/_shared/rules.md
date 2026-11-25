@@ -7,33 +7,55 @@ Berlaku untuk semua agen dan skill (`/validate-tiket`, `/develop-tiket`, `/rilis
 - Skrip: `$AGENT_WORKFLOW_DIR/bin/<skrip>`. Jika `AGENT_WORKFLOW_DIR` kosong, isi dengan folder repo:
   `export AGENT_WORKFLOW_DIR="$(cd "$(readlink ~/.claude/skills/_agent-workflow-shared)/../.." && pwd -P)"`
   Tiap panggilan Bash = shell baru: ulangi export ini di awal panggilan yang memakai skrip.
-- State lokal (bukan di repo): `${AGENT_WORKFLOW_STATE:-$HOME/.agent-workflow}/` — daftar transisi Jira (kunci device ada di `~/.agent-workflow/locks`).
+- State lokal (bukan di repo): `${AGENT_WORKFLOW_STATE:-$HOME/.agent-workflow}/` — daftar status tiket yang boleh dipakai agen: `jira-transitions.json` (Jira), `ticket-status.json` (GitHub/GitLab) (kunci device ada di `~/.agent-workflow/locks`).
 - **Lokasi khusus project tidak pernah ditulis di konfigurasi global** (agen, skill, rules, guard, CLAUDE.md global): folder/repo dokumen business discovery, desain/mockup, kontrak API, blueprint, remote yang di-pull, folder project. Agen membaca memory project Claude Code (`MEMORY.md` project) dan `## Catatan agen` di `CLAUDE.md` project. Belum ada → tanya user sekali (path + fungsinya), simpan sebagai memory project tipe `reference`, lalu pakai. Path berubah/tidak ditemukan → perbarui memory itu setelah bertanya.
 - **Branch project** (per repo, juga dari memory project): `<primary>` = branch produksi/live (sumber hotfix, tujuan MR rilis), `<protected>` = branch terlindungi untuk integrasi (sumber dan tujuan feature request/fix). Belum ada di memory → kumpulkan saran (`git remote -v`, `git ls-remote --symref upstream HEAD`, `git branch -r`), tanya user sekali, simpan sebagai memory project tipe `reference` (remote fork/utama ikut dicatat bila bukan `origin`/`upstream`). Memory ini juga memuat **strategi merge upstream** (squash / merge commit) untuk PR tiket; PR rilis `<protected>` → `<primary>` wajib merge commit. Upstream hanya mengizinkan squash → berhenti dan tanya. Nama `master`/`develop` di dokumen workflow hanya contoh, bukan aturan.
 - **Server API per env** (juga dari memory project): base URL dev/beta/live dan pemetaan build variant (flavor/scheme) → env. Belum ada → kumpulkan saran dari konfigurasi build project, tanya user sekali, simpan sebagai memory project tipe `reference`. Kredensial tidak pernah disimpan di sini.
 - **Suite regresi** (juga dari memory project): folder flow regresi di repo project (mis. `.maestro/regression/`; iOS XCUITest bila ada) dan aturan tag Maestro: `area-<modul>` per modul, `smoke-live` untuk flow baca-saja yang aman di live. Belum ada → tanya user sekali, simpan sebagai memory project tipe `reference`; suite belum ada sama sekali → mulai kosong, tumbuh dari flow TC tiket (`/develop-tiket` langkah 8).
 - **Data di beta/live:** cek API tetap method aman. Regresi UI di **beta** boleh menulis data lewat app memakai akun uji (`credentials.md`), data uji berawalan kode tiket/versi. **Live** hanya flow `smoke-live` (baca saja); tidak ada login akun nyata atau penulisan data selain akun uji live yang terdaftar di `credentials.md`.
 
+## Platform tiket (cek pertama, sekali per project)
+Workflow **tidak** menetapkan platform tiket default. "Tiket", "komentar tiket", dan "pindah status" di semua skill dijalankan lewat adapter platform yang dipilih user untuk project ini.
+
+**Checklist di awal setiap perintah** (sebelum membaca tiket):
+1. Baca memory project (`MEMORY.md` project / `## Catatan agen` di `CLAUDE.md` project) → kunci **Platform tiket**.
+2. Belum ada (= `none`, nilai awal) → **berhenti dan tanya user** sebelum langkah lain. Jangan menebak dari konektor yang kebetulan terpasang (mis. Atlassian MCP aktif ≠ project memakai Jira).
+3. User bingung/belum punya platform → tawarkan alternatif sesuai host git project (`git remote -v`): GitHub → **GitHub Projects** (issue + board); GitLab → **GitLab Issue Board**. Opsi lain: **Jira**, atau **tanpa platform** (manual).
+4. Simpan jawaban sebagai memory project tipe `reference`: platform, identitas board (Jira: prefix kode + cloudId; GitHub: `owner/repo` + nomor/ID project; GitLab: `group/repo` + board), format KODE tiket. Lalu jalankan **Setup status tiket** di bawah (kecuali tanpa platform).
+5. Cek koneksi adapter (tabel); gagal → berhenti dan tanya. Platform di memory tidak cocok dengan tiket yang diberikan → tanya.
+
+| Operasi | Jira | GitHub Projects | GitLab Issue Board | Tanpa platform |
+|---|---|---|---|---|
+| Cek koneksi | Atlassian MCP `atlassianUserInfo` | `gh auth status` | `glab auth status` | — |
+| KODE tiket | `PROJ-123` | `GH-123` (issue `#123`) | `GL-123` (issue `#123`) | kode bebas dari user, mis. `TASK-1` |
+| Baca tiket + komentar | `getJiraIssue` | `gh issue view <n> --comments` | `glab issue view <n> --comments` | teks dari user di chat |
+| Cari tiket terkait | `searchJiraIssuesUsingJql` | `gh issue list --search` | `glab issue list --search` | tanya user |
+| Komentar tiket | `addCommentToJiraIssue` | `gh issue comment <n>` | `glab issue note <n>` | teks komentar ditulis di chat untuk user |
+| Pindah status | `transitionJiraIssue` (id dari `jira-transitions.json`) | `gh project item-edit --single-select-option-id` (id dari `ticket-status.json`) | `glab issue update <n> --label/--unlabel` (label dari `ticket-status.json`) | tidak ada; sebut status yang disarankan di chat |
+| Tiket rilis + link | `createJiraIssue` + `createIssueLink` | `gh issue create` + sebut `#n` di body | `glab issue create` + `/relate` | dokumen rilis saja |
+
+Di semua skill/agen: "komentar tiket" dan "pindah status" = baris tabel ini untuk platform project. Nama fungsi Jira yang masih tertulis di langkah skill = contoh adapter Jira. Done/tutup issue **tidak pernah** dilakukan agen di platform mana pun.
+
 ## Tim dan model
 | Agen | Model (Orca `--model`) | Tugas | Tidak boleh |
 |---|---|---|---|
 | SPV | opus (`claude-opus-5-5`) | bagi tugas, jatah device, putuskan selesai | kode produk |
-| Planner | fable (`claude-fable-5-2`) | rencana + test case tiket mode tim, analisis eskalasi; atas panggilan SPV | kode produk, Jira, device, memerintah agen lain |
+| Planner | fable (`claude-fable-5-2`) | rencana + test case tiket mode tim, analisis eskalasi; atas panggilan SPV | kode produk, tiket, device, memerintah agen lain |
 | Validator | opus (`claude-opus-5-5`) | /validate-tiket; mode tim = SPV validasi | kode produk |
-| PdM | sonnet (`claude-sonnet-5-5`) | /validate-tiket tim: dokumen business discovery | menulis repo/Jira/Docs, device |
-| Product Designer | sonnet (`claude-sonnet-5-5`), eskalasi opus (`claude-opus-5-5`) | /validate-tiket tim: desain/mockup, reproduksi bug UI | menulis repo/Jira/Docs |
-| Contract Runner | sonnet (`claude-sonnet-5-5`) | /validate-tiket tim: Schemathesis + Pact endpoint tiket, diff kontrak; /develop-tiket: Matriks env (dev/beta/live) | fuzzing/menulis data ke beta/live, menulis repo/Jira/Docs |
-| HoE | opus (`claude-opus-5-5`) | /validate-tiket tim: codebase vs blueprint, kontrak API, bug logika/API | menulis repo/Jira/Docs |
-| Spesialis eskalasi | fable (`claude-fable-5-2`), on-demand | /validate-tiket tim: hanya saat pemicu eskalasi | menulis repo/Jira/Docs, memutuskan |
-| PjM | sonnet (`claude-sonnet-5-5`) | /validate-tiket tim: tiket terkait/blocking, PR/MR terbuka, risiko bentrok | menulis Jira/PR/Docs, device |
+| PdM | sonnet (`claude-sonnet-5-5`) | /validate-tiket tim: dokumen business discovery | menulis repo/tiket/Docs, device |
+| Product Designer | sonnet (`claude-sonnet-5-5`), eskalasi opus (`claude-opus-5-5`) | /validate-tiket tim: desain/mockup, reproduksi bug UI | menulis repo/tiket/Docs |
+| Contract Runner | sonnet (`claude-sonnet-5-5`) | /validate-tiket tim: Schemathesis + Pact endpoint tiket, diff kontrak; /develop-tiket: Matriks env (dev/beta/live) | fuzzing/menulis data ke beta/live, menulis repo/tiket/Docs |
+| HoE | opus (`claude-opus-5-5`) | /validate-tiket tim: codebase vs blueprint, kontrak API, bug logika/API | menulis repo/tiket/Docs |
+| Spesialis eskalasi | fable (`claude-fable-5-2`), on-demand | /validate-tiket tim: hanya saat pemicu eskalasi | menulis repo/tiket/Docs, memutuskan |
+| PjM | sonnet (`claude-sonnet-5-5`) | /validate-tiket tim: tiket terkait/blocking, PR/MR terbuka, risiko bentrok | menulis tiket/PR/Docs, device |
 | Reviewer | opus (`claude-opus-5-5`) | performa & keamanan, lalu logika vs AC; review ditulis di PR/MR | review kode sendiri |
 | Release | haiku (`claude-haiku-5-5`) | Draft PR/MR, nomor build, build+upload, PR/MR siap review, komentar & geser tiket, merge PR tiket setelah audit (/rilis-tiket), PR revert | Done, upload prod tanpa izin, merge PR rilis ke `<primary>` |
-| Coder | sonnet (`claude-sonnet-5-5`) | TDD di branch sendiri, push rutin branch tiketnya ke `origin` | Jira, push selain branch tiketnya, force-push, upload, device di luar jatah |
-| QA | sonnet (`claude-sonnet-5-5`) | Maestro, XCUITest, Schemathesis, Pact di device; regresi area terdampak (/develop-tiket), regresi penuh beta + smoke live (/branch-manager) | Jira, push, upload, device di luar jatah |
-| Auditor | opus (`claude-opus-5-5`) | /audit-issue: kode, log, reproduksi | menulis repo/Jira |
-| Analis | opus (`claude-opus-5-5`) | /audit-issue: lampiran | menulis repo/Jira |
+| Coder | sonnet (`claude-sonnet-5-5`) | TDD di branch sendiri, push rutin branch tiketnya ke `origin` | tiket, push selain branch tiketnya, force-push, upload, device di luar jatah |
+| QA | sonnet (`claude-sonnet-5-5`) | Maestro, XCUITest, Schemathesis, Pact di device; regresi area terdampak (/develop-tiket), regresi penuh beta + smoke live (/branch-manager) | tiket, push, upload, device di luar jatah |
+| Auditor | opus (`claude-opus-5-5`) | /audit-issue: kode, log, reproduksi | menulis repo/tiket |
+| Analis | opus (`claude-opus-5-5`) | /audit-issue: lampiran | menulis repo/tiket |
 
-Management (SPV, Planner, Validator, Reviewer, Release) memutuskan dan berbicara ke luar: Jira, Claude Docs, git remote, Firebase/TestFlight. Development (Coder, QA) hanya kode dan device; satu-satunya akses remote Coder = push branch tiketnya sendiri ke `origin`. Planner hanya penasihat SPV: menulis dokumen rencana di Claude Docs, tidak berbicara ke agen lain atau ke luar. Tim validasi (PdM, Product Designer, Contract Runner, HoE, Spesialis eskalasi, PjM) hanya-baca dan melapor ke Validator (SPV validasi), yang menulis laporan, komentar Jira, dan transisi. Housekeeping = skrip shell, tanpa agen. Model diubah di `~/.claude/agents/<peran>.md`.
+Management (SPV, Planner, Validator, Reviewer, Release) memutuskan dan berbicara ke luar: platform tiket, Claude Docs, git remote, Firebase/TestFlight. Development (Coder, QA) hanya kode dan device; satu-satunya akses remote Coder = push branch tiketnya sendiri ke `origin`. Planner hanya penasihat SPV: menulis dokumen rencana di Claude Docs, tidak berbicara ke agen lain atau ke luar. Tim validasi (PdM, Product Designer, Contract Runner, HoE, Spesialis eskalasi, PjM) hanya-baca dan melapor ke Validator (SPV validasi), yang menulis laporan, komentar tiket, dan pindah status. Housekeeping = skrip shell, tanpa agen. Model diubah di `~/.claude/agents/<peran>.md`.
 
 ## Mode kerja
 - **Diawasi**: sesi biasa, user menyetujui izin.
@@ -43,7 +65,7 @@ Management (SPV, Planner, Validator, Reviewer, Release) memutuskan dan berbicara
 - `git push` ke remote selain `origin` (downstream/fork), termasuk `--tags` dan hapus branch. Pengecualian: tag versi `vX.Y.Z` yang ditulis eksplisit (tanpa force/hapus) boleh ke `origin` dan `upstream`.
 - Force-push atau hapus `master`/`main`/`develop`.
 - `rm -r`/`rm -rf` di luar folder project. Pengecualian: artefak build yang bisa dibuat ulang (`build`, `.gradle`, `.cxx`, `.kotlin`, `DerivedData`, `.build`) di worktree lain repo yang sama atau di folder project yang terdaftar di `~/.agent-workflow/build-roots.txt` (diisi user); isi `/tmp/qa/` (output uji sementara) bebas dihapus.
-- Memindah tiket Jira ke status yang tidak ada di `~/.agent-workflow/jira-transitions.json` (Done tidak pernah ada di sana).
+- Memindah tiket ke status yang tidak ada di daftar status project (`jira-transitions.json` / `ticket-status.json`; Done tidak pernah ada di sana), dan menutup issue (`gh issue close`, `glab issue close`).
 - Edit/Write file di worktree primary; berlaku untuk repo yang punya worktree tambahan (pola Orca).
 - Membuka terminal/agen sendiri (`orca terminal split`, `orca terminal create`, `orca agent launch`, `worker-start --agent`): agen tambahan selalu **teammate** (lihat Orkestrasi).
 - Membuat project/repo/workspace Orca baru (`orca repo add`, `orca project setup-*`, `--worktree new-child|new-top-level`, `--no-parent`).
@@ -57,7 +79,7 @@ Jangan mencari jalan memutar. Jika diblokir, laporkan pesannya ke SPV/user.
 3. Nomor build tidak jelas (`build-number.sh` keluar dengan kode 3).
 4. Kredensial tidak ditemukan.
 5. Dua fix hotfix bentrok (mode tim: SPV minta analisis opsi dari Planner dulu, lalu tanya).
-6. `build:heavy` dipakai tiket Jira lain: tunggu atau dahulukan tugas kita (cara di `devices.md` → Build berat).
+6. `build:heavy` dipakai tiket lain: tunggu atau dahulukan tugas kita (cara di `devices.md` → Build berat).
 
 Cara tanya:
 - Teammate: tanya ke SPV lewat SendMessage dan tunggu jawabannya; SPV yang bertanya ke user.
@@ -128,12 +150,14 @@ Di `/audit-issue`, worker reproduksi memakai nama QA (Paijo, Euis, Ningsih) teta
 - Tag versi `vX.Y.Z` (beranotasi) dibuat Release setelah PR rilis di-merge manusia, di commit hasil merge, lalu di-push ke `upstream` dan `origin`. Tag tidak pernah di-force atau dihapus.
 - Push hanya oleh Release: branch hanya ke `origin`; tag versi ke `upstream` dan `origin`.
 
-## Setup transisi Jira (sekali per project)
-Hook menolak transisi sebelum project punya daftar. Jika ditolak "belum punya daftar transisi":
+## Setup status tiket (sekali per project)
+Hanya status **Todo**, **In Progress**, dan **Ready To Review** yang boleh dipakai agen (jangan pernah Done / tutup issue). Hook menolak pindah status sebelum project punya daftar. Tulis daftar lewat Bash (bukan Edit/Write), gabungkan dengan isi lama.
+
+**Jira.** Ditolak "belum punya daftar transisi":
 1. `mcp__claude_ai_Atlassian__getTransitionsForJiraIssue` pada satu tiket project itu.
 2. Tunjukkan tabel `id → nama status` ke user.
-3. User memilih id untuk **Todo**, **In Progress**, dan **Ready To Review** (jangan pernah Done).
-4. Tulis lewat Bash (bukan Edit/Write), gabungkan dengan isi lama:
+3. User memilih id untuk **Todo**, **In Progress**, dan **Ready To Review**.
+4. Simpan:
 ```bash
 S=${AGENT_WORKFLOW_STATE:-$HOME/.agent-workflow}; F="$S/jira-transitions.json"
 mkdir -p "$S" && { [ -s "$F" ] || echo '{}' > "$F"; } &&
@@ -141,5 +165,23 @@ jq '. + {"PROJ":{"allow":["11","21","31"],"names":{"11":"Todo","21":"In Progress
 ```
 Pemindahan tiket: `mcp__claude_ai_Atlassian__transitionJiraIssue` dengan id dari file itu.
 
-## Gaya tulis (laporan, komentar Jira, pertanyaan)
-Bahasa Indonesia, singkat padat, ramah pemula; tabel dan diagram mermaid lebih dulu daripada paragraf. Komentar Jira: humanis dan mudah dipahami pembaca awam (tanpa istilah teknis), orang pertama "aku", sapaan ramah (Mas/Mba/Kak), baris pertama memuat link laporan Claude Docs. Detail format: `report-format.md`. Kredensial tidak pernah ditulis ke Docs/Jira/MR.
+**GitHub Projects.** `gh project field-list <nomor> --owner <owner> --format json` → field Status + id opsinya; ID project dari `gh project view <nomor> --owner <owner> --format json --jq .id`. User memilih id opsi Todo / In Progress / Ready To Review (buat kolom Ready To Review di board bila belum ada, oleh user). Simpan:
+```bash
+S=${AGENT_WORKFLOW_STATE:-$HOME/.agent-workflow}; F="$S/ticket-status.json"
+mkdir -p "$S" && { [ -s "$F" ] || echo '{}' > "$F"; } &&
+jq '.github += {"PVT_xxx":{"allow":["opt1","opt2","opt3"],"names":{"opt1":"Todo","opt2":"In Progress","opt3":"Ready To Review"}}}' "$F" > "$F.tmp" && mv "$F.tmp" "$F"
+```
+Pindah status: `gh project item-edit --project-id <PVT_xxx> --id <item> --field-id <status-field> --single-select-option-id <opt>`.
+
+**GitLab Issue Board.** Kolom board = label (mis. `status::todo`). `glab label list` → user memilih label Todo / In Progress / Ready To Review. Simpan:
+```bash
+S=${AGENT_WORKFLOW_STATE:-$HOME/.agent-workflow}; F="$S/ticket-status.json"
+mkdir -p "$S" && { [ -s "$F" ] || echo '{}' > "$F"; } &&
+jq '.gitlab += {"group/repo":{"allow":["status::todo","status::in-progress","status::ready-to-review"]}}' "$F" > "$F.tmp" && mv "$F.tmp" "$F"
+```
+Pindah status: `glab issue update <n> --unlabel <lama> --label <baru>`.
+
+**Tanpa platform.** Tidak ada setup; agen menyebut status yang disarankan di chat dan user yang memindah.
+
+## Gaya tulis (laporan, komentar tiket, pertanyaan)
+Bahasa Indonesia, singkat padat, ramah pemula; tabel dan diagram mermaid lebih dulu daripada paragraf. Komentar tiket: humanis dan mudah dipahami pembaca awam (tanpa istilah teknis), orang pertama "aku", sapaan ramah (Mas/Mba/Kak), baris pertama memuat link laporan Claude Docs. Detail format: `report-format.md`. Kredensial tidak pernah ditulis ke Docs/tiket/MR.

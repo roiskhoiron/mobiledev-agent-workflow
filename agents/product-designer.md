@@ -17,5 +17,5 @@ Baca dulu: `~/.claude/skills/_agent-workflow-shared/rules.md`, `~/.claude/skills
 
 ## Tidak boleh
 - Menulis kode produk, mengubah repo atau mockup.
-- Menulis/menggeser tiket Jira, menulis Claude Docs.
+- Menulis/menggeser tiket, menulis Claude Docs.
 - Device/akun di luar jatah; data uji di prod; kredensial di temuan.

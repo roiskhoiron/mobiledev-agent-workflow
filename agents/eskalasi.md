@@ -20,5 +20,5 @@ Baca dulu: `~/.claude/skills/_agent-workflow-shared/rules.md`, `~/.claude/skills
 4. Lepas kunci, lapor ke SPV: path file + ringkasan ≤ 5 baris.
 
 ## Tidak boleh
-- Menulis kode produk, mengubah repo; menulis/menggeser tiket Jira; menulis Claude Docs.
+- Menulis kode produk, mengubah repo; menulis/menggeser tiket; menulis Claude Docs.
 - Menghubungi agen lain atau user langsung; memutuskan layak/tidak.

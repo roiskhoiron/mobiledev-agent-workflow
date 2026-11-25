@@ -1,6 +1,30 @@
 # Alur kerja
 
-## Papan kanban Jira
+## Platform tiket
+Workflow tidak mengikat ke satu platform. Status papan kanban di bawah (To Do → In Progress → Ready To Review → Done) dipetakan ke platform yang kamu pilih per project:
+
+| Platform | Kolom status = | Kode tiket | Akses agen |
+| --- | --- | --- | --- |
+| Jira | transisi workflow Jira | `PROJ-1234` | Atlassian MCP |
+| GitHub Projects | field Status di board Project | `GH-42` (issue #42) | `gh` CLI |
+| GitLab Issue Board | label kolom board (mis. `status::todo`) | `GL-42` (issue #42) | `glab` CLI |
+| Tanpa platform | — (kamu yang memindah) | kode bebas, mis. `TASK-1` | komentar & saran status ditulis di chat |
+
+```mermaid
+flowchart TD
+  S[Perintah pertama di project] --> M{Platform tiket di memory project?}
+  M -- ada --> C[Cek koneksi adapter] --> L[Lanjut perintah]
+  M -- belum / none --> Q[Agen bertanya ke kamu]
+  Q -- kamu memilih --> W[Simpan di memory project + setup status]
+  Q -- bingung --> R[Saran: GitHub Projects / GitLab Issue Board sesuai host git]
+  R --> W --> C
+```
+
+- Default = **none**: agen tidak menebak dari konektor yang kebetulan terpasang, tapi **bertanya** sebelum langkah apa pun.
+- Setelah dipilih, agen menanyakan sekali status mana yang boleh ia pakai (Todo, In Progress, Ready To Review). Daftar itu disimpan di `~/.agent-workflow/jira-transitions.json` (Jira) atau `~/.agent-workflow/ticket-status.json` (GitHub/GitLab).
+- Tabel operasi per platform (baca, komentar, pindah status): `skills/_shared/rules.md` → Platform tiket.
+
+## Papan kanban tiket
 Setiap tiket bergerak dari kiri ke kanan. Satu kolom = satu status tiket.
 
 | | To Do | In Progress | Ready To Review | Done |
@@ -8,7 +32,7 @@ Setiap tiket bergerak dari kiri ke kanan. Satu kolom = satu status tiket.
 | **Artinya** | Tiket baru, belum dicek | Layak dan sedang dikerjakan | Kode + uji selesai, menunggu review manusia | Diterima dan selesai |
 | **Perintah di kolom ini** | `/validate-tiket` | `/develop-tiket` | `/rilis-tiket` (feedback QA) | `/rilis-tiket` (merge PR tiket), `/branch-manager --rilis` (rilis versi) |
 | **Pindah oleh** | manusia; atau agen (`/rilis-tiket`, izin user per tiket) bila ditolak QA | agen (Validator), bila **Layak** | agen (Release), bila semua TC Lulus/Tertahan beralasan | **manusia saja** |
-| **Bukti yang ditinggalkan** | — | laporan validasi + komentar Jira | rencana, laporan uji, build dev, PR/MR, komentar Jira | — |
+| **Bukti yang ditinggalkan** | — | laporan validasi + komentar tiket | rencana, laporan uji, build dev, PR/MR, komentar tiket | — |
 
 ```mermaid
 flowchart LR
@@ -22,7 +46,7 @@ flowchart LR
   P -->|/branch-manager --rilis: PR rilis, build live, tag vX.Y.Z| M[primary]
 ```
 
-- Agen **tidak pernah** memindah tiket ke Done; guard memblokirnya karena Done tidak ada di `jira-transitions.json`.
+- Agen **tidak pernah** memindah tiket ke Done atau menutup issue; guard memblokirnya karena Done tidak ada di daftar status project (`jira-transitions.json` / `ticket-status.json`), dan `gh issue close` / `glab issue close` selalu ditolak.
 - Agen hanya boleh memakai transisi **In Progress**, **Ready To Review**, dan **Todo** (Todo hanya lewat `/rilis-tiket` dengan izin per tiket). ID-nya dipilih kamu sekali per project.
 - Tiket yang ditolak QA kembali ke Todo; `/validate-tiket` mendeteksi jejak (branch `*/<KODE>`, PR/MR, komentar laporan) dan masuk **mode validasi ulang**: membaca penolakan, menggolongkannya, lalu menulis laporan delta + daftar **Yang ditolak**. `/develop-tiket` melanjutkan di branch, worktree, dan PR/MR yang sama (PR/MR kembali ke Draft) dengan rencana revisi yang punya bagian **Yang ditolak**.
 
@@ -35,16 +59,16 @@ flowchart LR
 1. Baca tiket, komentar, dan link terkait; catat AC dan versi.
 2. **Bug:** pasang versi yang disebut tiket (kosong = build dev/beta terbaru), reproduksi di device, screenshot tiap langkah dengan kotak merah.
    **Fitur:** cek requirement lengkap, spec API ada di repo, desain tersedia.
-3. Laporan di Claude Docs, lalu komentar Jira: **Layak** / **Layak dengan catatan** / **Tidak layak**.
+3. Laporan di Claude Docs, lalu komentar tiket: **Layak** / **Layak dengan catatan** / **Tidak layak**.
 4. Layak → tiket ke In Progress. Tidak layak → tetap Todo.
 
-**Mode tim (`--tim`):** Validator jadi SPV. Sekali per sesi ia mengambil dokumen terbaru (business discovery, mockup, kontrak API, blueprint; lokasinya per project disimpan di memory project) dan menjalankan `graphify update`. Lalu paralel: **PdM** membaca dokumen bisnis, **Product Designer** mengecek mockup dan mereproduksi bug UI, **Contract Runner** menjalankan Schemathesis/Pact, **HoE** mencocokkan codebase dengan blueprint dan mereproduksi bug logika, **PjM** memantau tiket terkait dan PR terbuka. **Spesialis eskalasi** (Fable 5.2) hanya dipanggil saat ada pemicu: bug logika gagal direproduksi, temuan ambigu, tiket high-risk, atau konflik antar-agen. Semua hanya-baca; Validator menulis satu laporan, komentar Jira, dan transisi. Tiket UI tanpa mockup paling tinggi **Layak dengan catatan**.
+**Mode tim (`--tim`):** Validator jadi SPV. Sekali per sesi ia mengambil dokumen terbaru (business discovery, mockup, kontrak API, blueprint; lokasinya per project disimpan di memory project) dan menjalankan `graphify update`. Lalu paralel: **PdM** membaca dokumen bisnis, **Product Designer** mengecek mockup dan mereproduksi bug UI, **Contract Runner** menjalankan Schemathesis/Pact, **HoE** mencocokkan codebase dengan blueprint dan mereproduksi bug logika, **PjM** memantau tiket terkait dan PR terbuka. **Spesialis eskalasi** (Fable 5.2) hanya dipanggil saat ada pemicu: bug logika gagal direproduksi, temuan ambigu, tiket high-risk, atau konflik antar-agen. Semua hanya-baca; Validator menulis satu laporan, komentar tiket, dan transisi. Tiket UI tanpa mockup paling tinggi **Layak dengan catatan**.
 
 **Tiket terkait dan requirement bermasalah (solo dan tim):** selain tiket yang sudah di-link, Validator (mode tim: PjM) mencari tiket Todo/In Progress yang tidak di-link tapi menyentuh komponen, label, layar, fitur, atau endpoint yang sama, lalu menilai selaras atau bertabrakan. Link antar tiket tidak dibuat agen, hanya disarankan di komentar.
 
 | Kondisi | Keputusan | Tindakan |
 | --- | --- | --- |
-| Informasi minim, AC inti jelas | Layak dengan catatan | Pertanyaan di komentar Jira untuk reporter |
+| Informasi minim, AC inti jelas | Layak dengan catatan | Pertanyaan di komentar tiket untuk reporter |
 | Informasi minim, AC inti kabur | Tidak layak | Tetap Todo; komentar berisi daftar yang harus dilengkapi |
 | Bertabrakan dengan tiket/dokumen lain | Tidak layak sampai diputuskan | Komentar menyebut kedua tiket + titik tabrakan; kamu memilih mana yang berlaku |
 | Tumpang tindih tapi selaras | Layak dengan catatan | Saran urutan pengerjaan atau penggabungan |
@@ -74,7 +98,7 @@ flowchart TD
   M --> B[Release: build dev]
   B --> Q[QA: uji di device]
   Q -->|gagal| K
-  Q -->|lulus, --uat: UAT kamu dulu| P[Laporan uji, PR/MR ditandai siap, komentar Jira]
+  Q -->|lulus, --uat: UAT kamu dulu| P[Laporan uji, PR/MR ditandai siap, komentar tiket]
   P --> T[Tiket ke Ready To Review + hapus worktree tiket]
 ```
 - **Sebelum mulai**, SPV menyinkronkan dokumen (business discovery, mockup, kontrak API, blueprint; sama seperti `/validate-tiket`) dan membaca laporan validasi terakhir:
@@ -96,14 +120,14 @@ flowchart TD
 - **Branch batch** hanya salinan lokal untuk build QA. Branch tiket tetap utuh dan di-push; PR/MR tiap tiket bersih dari tiket lain.
 - **QA** membandingkan UI dengan mockup dan menguji per server; laporan menyorot endpoint yang sudah dan belum tersedia di dev/beta/live.
 - **Regresi area terdampak:** QA juga menjalankan flow suite regresi (bertag `area-<modul>`) untuk modul yang disentuh tiket. Flow TC yang lulus dan stabil ditambahkan Coder ke suite di branch tiket, jadi suite tumbuh dari tiket ke tiket. Lokasi suite disimpan di memory project.
-- **Tiap build variant** disertai nama server + base URL API-nya di catatan rilis, laporan, PR/MR, dan komentar Jira.
+- **Tiap build variant** disertai nama server + base URL API-nya di catatan rilis, laporan, PR/MR, dan komentar tiket.
 - **SPV memantau semua sub-agent sampai tugasnya tuntas**: status berkala, cek hasil benar-benar ada, lalu menghentikan teammate dan menutup panelnya.
 - Di `--batch`, build baru jalan setelah **semua** tiket lolos review (atau dikeluarkan dari batch dengan alasan tertulis). Perbaikan setelah QA dikumpulkan dulu, baru satu build ulang.
 - Tiket yang macet dikeluarkan dari batch dan dilaporkan, tidak dijalankan sendiri diam-diam.
 - Dengan `--uat`, device fisik dipindah ke kamu (kunci `human-<KODE>`); crash selama UAT mengembalikan tiket ke Coder. Pemantauan log gagal → SPV memberi tahu, dan hasil UAT mengikuti laporanmu.
 
 ## `/rilis-tiket`
-Per tiket (Ready To Review atau Done). Agen membaca **feedback QA terakhir** (komentar manusia terbaru di Jira + PR/MR) lalu:
+Per tiket (Ready To Review atau Done). Agen membaca **feedback QA terakhir** (komentar manusia terbaru di tiket + PR/MR) lalu:
 
 | Keadaan | Tindakan |
 | --- | --- |
@@ -126,8 +150,8 @@ Tiket yang pernah dikeluarkan dari rilis: PR **revert dari revert** dulu, baru P
 ## `/audit-issue`
 1. Langsung membuat dokumen laporan di Claude Docs, lalu memecah keluhan jadi pertanyaan.
 2. Auditor menelusuri kode, riwayat git, log, dan reproduksi di device memakai build yang **sudah ada**; Analis membandingkan lampiran (mockup/PDF/gambar) dengan aplikasi.
-3. Kesimpulan dengan tingkat keyakinan (**pasti / kuat / dugaan**) + saran tiket Jira (tidak dibuat otomatis).
-4. Selama audit, guard memblokir semua penulisan ke repo, git remote, dan Jira.
+3. Kesimpulan dengan tingkat keyakinan (**pasti / kuat / dugaan**) + saran tiket (tidak dibuat otomatis).
+4. Selama audit, guard memblokir semua penulisan ke repo, git remote, dan platform tiket.
 
 Detail lengkap tiap langkah: `skills/<perintah>/SKILL.md`. Aturan bersama: [skills/_shared/rules.md](../skills/_shared/rules.md).
 

@@ -1,6 +1,8 @@
 # mobiledev-agent-workflow
 
-Tim agen Claude Code + Orca untuk mengerjakan tiket Jira di proyek mobile (native iOS/Android, KMP): dari cek tiket, menulis kode, uji di device, build, sampai PR/MR dan rilis. Dilengkapi pagar keamanan (`guard.sh`) dan pembersihan disk otomatis.
+Tim agen Claude Code + Orca untuk mengerjakan tiket di proyek mobile (native iOS/Android, KMP): dari cek tiket, menulis kode, uji di device, build, sampai PR/MR dan rilis. Dilengkapi pagar keamanan (`guard.sh`) dan pembersihan disk otomatis.
+
+**Platform tiket tidak ditentukan sejak awal.** Workflow bisa dipakai dengan Jira, GitHub Projects, GitLab Issue Board, atau tanpa platform (manual). Nilai awalnya kosong (`none`): saat perintah pertama di sebuah project, agen **bertanya dulu** platform mana yang dipakai, lalu menyimpannya di memory project. Bingung memilih? Agen menyarankan board bawaan host git project: GitHub Projects (repo di GitHub) atau GitLab Issue Board (repo di GitLab). Detail: [Platform tiket](docs/alur-kerja.md#platform-tiket).
 
 Status: **v1 terpasang**, siap uji coba di tiket nyata.
 
@@ -20,13 +22,13 @@ Ketik perintah ini di Claude Code, di dalam terminal Orca:
 
 | Perintah | Gunanya | Jalankan dari |
 | --- | --- | --- |
-| `/validate-tiket KODE... [--solo\|--tim]` | Cek tiket layak dikerjakan; bug direproduksi di device. `--tim`: dibagi ke PdM, Product Designer, Contract Runner, HoE, PjM (+ Spesialis eskalasi). Hasil: laporan bergambar + komentar Jira | mana saja |
-| `/develop-tiket KODE... [--solo\|--tim] [--batch\|--separate] [--uat]` | Rencana, kode (TDD), review, uji di device, build, PR/MR, komentar Jira, tiket ke Ready To Review | workspace domain |
+| `/validate-tiket KODE... [--solo\|--tim]` | Cek tiket layak dikerjakan; bug direproduksi di device. `--tim`: dibagi ke PdM, Product Designer, Contract Runner, HoE, PjM (+ Spesialis eskalasi). Hasil: laporan bergambar + komentar tiket | mana saja |
+| `/develop-tiket KODE... [--solo\|--tim] [--batch\|--separate] [--uat]` | Rencana, kode (TDD), review, uji di device, build, PR/MR, komentar tiket, tiket ke Ready To Review | workspace domain |
 | `/rilis-tiket KODE...` | Tindak lanjut feedback QA per tiket: kembalikan ke Todo, build variant lain (Beta/Prod), atau audit + merge PR tiket | root project atau domain |
 | `/branch-manager --rilis KODE` | Rilis per versi: tracing perubahan ke tiket/PR/programmer, regresi penuh di build beta, laporan Claude Docs, PR rilis, build live + smoke live, tag setelah PR rilis di-merge manusia | root project atau domain |
 | `/audit-issue "teks" [--solo\|--tim] [lampiran...]` | Telusuri keluhan yang belum jadi tiket, **hanya-baca**. Hasil: laporan + saran tiket | mana saja |
 
-Contoh:
+Contoh (kode Jira; di GitHub/GitLab mis. `GH-42` / `GL-42`):
 ```text
 /validate-tiket PROJ-1234
 /develop-tiket PROJ-1234 PROJ-1240 --tim
@@ -48,7 +50,9 @@ Semua flag dan alur tiap perintah: [docs/alur-kerja.md](docs/alur-kerja.md).
 | **Branch batch** | Branch lokal tempat semua tiket `--batch` digabung untuk satu build. Tidak pernah di-push |
 | **Titik tunggu** | Di `--batch`, build dan QA ulang menunggu semua tiket siap, lalu jalan sekali |
 | **Guard** | Hook yang memblokir perintah berbahaya sebelum dijalankan |
-| **Claude Docs** | Tempat laporan bergambar; link-nya ditaruh di baris pertama komentar Jira |
+| **Platform tiket** | Tempat tiket dan kolom statusnya: Jira, GitHub Projects, GitLab Issue Board, atau tanpa platform. Dipilih per project, ditanyakan agen di awal |
+| **KODE** | Kode tiket sesuai platform, mis. `PROJ-1234` (Jira), `GH-42` (GitHub issue #42), `GL-42` (GitLab issue #42) |
+| **Claude Docs** | Tempat laporan bergambar; link-nya ditaruh di baris pertama komentar tiket |
 | **Downstream / upstream** | `origin` = fork kita (boleh push branch); `upstream` = repo utama (hanya lewat MR) |
 | **TC / AC** | Test case / acceptance criteria tiket. Hasil TC: Lulus, Gagal, atau Tertahan (dengan alasan) |
 
