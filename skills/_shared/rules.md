@@ -8,20 +8,28 @@ Berlaku untuk semua agen dan skill (`/validate-tiket`, `/develop-tiket`, `/rilis
   `export AGENT_WORKFLOW_DIR="$(cd ~/.agent-workflow/repo && pwd -P)"`
   Tiap panggilan Bash = shell baru: ulangi export ini di awal panggilan yang memakai skrip.
 - State lokal (bukan di repo): `${AGENT_WORKFLOW_STATE:-$HOME/.agent-workflow}/` — daftar status tiket yang boleh dipakai agen: `jira-transitions.json` (Jira), `ticket-status.json` (GitHub/GitLab) (kunci device ada di `~/.agent-workflow/locks`).
-- **Lokasi khusus project tidak pernah ditulis di konfigurasi global** (agen, skill, rules, guard, CLAUDE.md global): folder/repo dokumen business discovery, desain/mockup, kontrak API, blueprint, remote yang di-pull, folder project. Agen membaca **memory project**: di Claude Code = memory project (`MEMORY.md` project); di coding agent lain = `~/.agent-workflow/projects/<nama-repo>/MEMORY.md` (buat bila belum ada; satu entri per baris: kunci, nilai, fungsi). Juga `## Catatan agen` di file instruksi project (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `.cursor/rules/`). Belum ada → tanya user sekali (path + fungsinya), simpan sebagai memory project tipe `reference`, lalu pakai. Path berubah/tidak ditemukan → perbarui memory itu setelah bertanya.
+- **Lokasi khusus project tidak pernah ditulis di konfigurasi global** (agen, skill, rules, guard, CLAUDE.md global): folder/repo dokumen business discovery, prototipe desain + handover + token, kontrak API, blueprint, remote yang di-pull, folder project. Agen membaca **memory project**: di Claude Code = memory project (`MEMORY.md` project); di coding agent lain = `~/.agent-workflow/projects/<nama-repo>/MEMORY.md` (buat bila belum ada; satu entri per baris: kunci, nilai, fungsi). Juga `## Catatan agen` di file instruksi project (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `.cursor/rules/`). Belum ada → tanya user sekali (path + fungsinya), simpan sebagai memory project tipe `reference`, lalu pakai. Path berubah/tidak ditemukan → perbarui memory itu setelah bertanya.
 - **Branch project** (per repo, juga dari memory project): `<primary>` = branch produksi/live (sumber hotfix, tujuan MR rilis), `<protected>` = branch terlindungi untuk integrasi (sumber dan tujuan feature request/fix). Belum ada di memory → kumpulkan saran (`git remote -v`, `git ls-remote --symref upstream HEAD`, `git branch -r`), tanya user sekali, simpan sebagai memory project tipe `reference` (remote fork/utama ikut dicatat bila bukan `origin`/`upstream`). Memory ini juga memuat **strategi merge upstream** (squash / merge commit) untuk PR tiket; PR rilis `<protected>` → `<primary>` wajib merge commit. Upstream hanya mengizinkan squash → berhenti dan tanya. Nama `master`/`develop` di dokumen workflow hanya contoh, bukan aturan.
 - **Server API per env** (juga dari memory project): base URL dev/beta/live dan pemetaan build variant (flavor/scheme) → env. Belum ada → kumpulkan saran dari konfigurasi build project, tanya user sekali, simpan sebagai memory project tipe `reference`. Kredensial tidak pernah disimpan di sini.
 - **Suite regresi** (juga dari memory project): folder flow regresi di repo project (mis. `.maestro/regression/`; iOS XCUITest bila ada) dan aturan tag Maestro: `area-<modul>` per modul, `smoke-live` untuk flow baca-saja yang aman di live. Belum ada → tanya user sekali, simpan sebagai memory project tipe `reference`; suite belum ada sama sekali → mulai kosong, tumbuh dari flow TC tiket (`/develop-tiket` langkah 8).
 - **Data di beta/live:** cek API tetap method aman. Regresi UI di **beta** boleh menulis data lewat app memakai akun uji (`credentials.md`), data uji berawalan kode tiket/versi. **Live** hanya flow `smoke-live` (baca saja); tidak ada login akun nyata atau penulisan data selain akun uji live yang terdaftar di `credentials.md`.
 
 ## Platform tiket (cek pertama, sekali per project)
-Workflow **tidak** menetapkan platform tiket default. "Tiket", "komentar tiket", dan "pindah status" di semua skill dijalankan lewat adapter platform yang dipilih user untuk project ini.
+Workflow tidak terikat pada satu platform tiket. "Tiket", "papan kanban", "komentar tiket", dan "pindah status" di semua skill dijalankan lewat adapter platform yang tercatat di memory project. Belum tercatat = `none`: agen **bertanya dulu**; tanpa jawaban lain (user bingung/"terserah") pilihannya **GitHub Projects**.
 
 **Checklist di awal setiap perintah** (sebelum membaca tiket):
 1. Baca memory project (lihat Lokasi: memory project + `## Catatan agen` di file instruksi project) → kunci **Platform tiket**.
 2. Belum ada (= `none`, nilai awal) → **berhenti dan tanya user** sebelum langkah lain. Jangan menebak dari konektor yang kebetulan terpasang (mis. Atlassian MCP aktif ≠ project memakai Jira).
-3. User bingung/belum punya platform → tawarkan alternatif sesuai host git project (`git remote -v`): GitHub → **GitHub Projects** (issue + board); GitLab → **GitLab Issue Board**. Opsi lain: **Jira**, atau **tanpa platform** (manual).
-4. Simpan jawaban sebagai memory project tipe `reference`: platform, identitas board (Jira: prefix kode + cloudId; GitHub: `owner/repo` + nomor/ID project; GitLab: `group/repo` + board), format KODE tiket. Lalu jalankan **Setup status tiket** di bawah (kecuali tanpa platform).
+3. Pilihan: **GitHub Projects** (default bila user bingung/tidak memilih), **Jira**, **GitLab Issue Board** (saran bila repo di GitLab, `git remote -v`), atau **tanpa platform** (manual).
+4. Simpan jawaban sebagai memory project tipe `reference`:
+   | Kunci | Contoh |
+   |---|---|
+   | Platform | GitHub Projects / Jira / GitLab Issue Board / tanpa platform |
+   | Lokasi papan | `owner/repo` + nomor project; kode project Jira + cloudId; `group/repo` + board |
+   | Pemetaan kolom | Todo, In Progress, Ready To Review, Done → nama status di platform (Done hanya dicatat untuk dibaca) |
+   | Pola kode tiket | `ITDEV-101` atau `#101` (disebut `GH-101` / `GL-101` di branch dan commit) |
+   | Alat akses | GitHub CLI atau GitHub MCP; Atlassian MCP; `glab` |
+   Lalu jalankan **Setup status tiket** di bawah (kecuali tanpa platform).
 5. Cek koneksi adapter (tabel); gagal → berhenti dan tanya. Platform di memory tidak cocok dengan tiket yang diberikan → tanya.
 
 | Operasi | Jira | GitHub Projects | GitLab Issue Board | Tanpa platform |
@@ -36,6 +44,50 @@ Workflow **tidak** menetapkan platform tiket default. "Tiket", "komentar tiket",
 
 Di semua skill/agen: "komentar tiket" dan "pindah status" = baris tabel ini untuk platform project. Nama fungsi Jira yang masih tertulis di langkah skill = contoh adapter Jira. Done/tutup issue **tidak pernah** dilakukan agen di platform mana pun.
 
+## Platform dokumentasi (cek kedua, sekali per project)
+Semua dokumen yang ditulis agen (laporan validasi, rencana + test case, laporan uji, laporan audit, laporan rilis) disebut **laporan** dan ditulis ke platform dokumentasi yang tercatat di memory project. Pola sama dengan platform tiket.
+
+**Checklist di awal setiap perintah** (sesudah platform tiket):
+1. Memory project → kunci **Platform dokumentasi**. Belum ada → tanya user; tanpa jawaban lain pilihannya **folder `docs/` di repo** (Markdown + Mermaid).
+2. Simpan sebagai memory project tipe `reference`: platform, lokasi (path folder di repo, atau alamat ruang dokumen), struktur, format.
+
+| | Folder `docs/` di repo (default) | Claude Docs | Confluence | Notion |
+|---|---|---|---|---|
+| Tulis | file Markdown di worktree tiket, commit, push branch tiket ke `origin` | `mcp__claude_ai_Claude_Docs__batch` / `update` | MCP Atlassian (halaman) | MCP Notion |
+| Gambar | `img/` di folder yang sama, dirujuk relatif | unggah ke dokumen | lampiran halaman | unggah ke halaman |
+| Link di komentar tiket | URL file di branch `origin` (mis. `https://github.com/<fork>/blob/<branch>/docs/tickets/<KODE>/validasi.md`) | link dokumen | link halaman | link halaman |
+
+Struktur (dipakai juga sebagai susunan halaman di platform lain):
+```text
+docs/
+  tickets/<KODE>/     validasi.md, rencana.md, uji.md, img/
+  audit/              <tanggal>-<judul-singkat>.md
+  rilis/              vX.Y.Z.md
+  runbooks/           langkah operasional
+  adr/                catatan keputusan
+```
+
+Aturan:
+- **Dokumen ikut perubahannya.** `rencana.md` dan `uji.md` di-commit di branch tiket, jadi masuk PR/MR yang sama dengan kodenya dan ikut direview. `--batch`: tiap tiket tetap punya folder sendiri di branch tiketnya (rencana gabungan ditulis di folder tiket pertama, tiket lain merujuknya).
+- **Laporan validasi** (`/validate-tiket`): Validator memakai worktree + branch tiket yang nanti dipakai `/develop-tiket` (dibuat seperti `/develop-tiket` langkah 3 bila belum ada), commit `docs(<KODE>): laporan validasi`, lalu push branch itu ke `origin` supaya link-nya bisa dibuka. Commit yang hanya menyentuh `docs/tickets/<KODE>/` **bukan** jejak pengerjaan (lihat deteksi jejak di `/validate-tiket`).
+- **Laporan audit** (`/audit-issue`, hanya-baca): draf dan final di `${TMPDIR:-/tmp}/audit/<slug>/docs/audit/<tanggal>-<judul>.md` (+ `img/`); agen tidak meng-commit. Di akhir, sebut path-nya ke user + saran commit di branch `docs/audit-<slug>`.
+- **Laporan rilis** (`/branch-manager`): `docs/rilis/vX.Y.Z.md` di branch `docs/rilis-vX.Y.Z` dari `upstream/<protected>`, di-push ke `origin` + PR ke `<protected>`. Tidak ikut `sha-rilis` (masuk setelah rilis); link-nya dari branch `origin`.
+- Tanpa kredensial di dokumen mana pun. Platform lain → susunan sama, judul halaman = nama file tanpa `.md` (mis. `Validasi <KODE> — judul`).
+
+## Masukan desain (acuan UI)
+Acuan desain tiket UI adalah **prototipe** dari workflow UI/UX, bukan gambar mockup. Lokasinya dicatat di memory project (pola URL prototipe, lokasi halaman handover, folder token hasil bangun).
+
+| Yang dirujuk | Bentuk | Dipakai oleh |
+|---|---|---|
+| Alamat tiap state | `.../prototypes/<KODE>/<layar>.html?state=<state>` (mis. `?state=gagal`) | Product Designer, Planner, Coder, QA |
+| Halaman handover | Tujuan, perilaku, token yang dipakai, catatan per platform | Planner, Coder |
+| Token hasil bangun | Resource Android / objek Compose dan berkas Swift dari Style Dictionary | Coder |
+
+- **Prototipe = rujukan, bukan kode untuk disalin.** Layar ditulis ulang dalam Kotlin/Swift.
+- **QA membandingkan layar app dengan alamat state yang sama** di prototipe, satu state demi satu state (screenshot app di samping screenshot state prototipe).
+- **Warna dan ukuran diambil dari token hasil bangun**, tidak diketik ulang dari tampilan prototipe. Token yang belum ada → tanya SPV, jangan hard-code.
+- **Tiket lama yang hanya punya mockup tetap bisa dikerjakan**, paling tinggi **Layak dengan catatan**; tiket UI tanpa prototipe maupun mockup juga paling tinggi Layak dengan catatan.
+
 ## Tim dan model
 | Agen | Model (Orca `--model`) | Tugas | Tidak boleh |
 |---|---|---|---|
@@ -43,7 +95,7 @@ Di semua skill/agen: "komentar tiket" dan "pindah status" = baris tabel ini untu
 | Planner | fable (`claude-fable-5-2`) | rencana + test case tiket mode tim, analisis eskalasi; atas panggilan SPV | kode produk, tiket, device, memerintah agen lain |
 | Validator | opus (`claude-opus-5-5`) | /validate-tiket; mode tim = SPV validasi | kode produk |
 | PdM | sonnet (`claude-sonnet-5-5`) | /validate-tiket tim: dokumen business discovery | menulis repo/tiket/Docs, device |
-| Product Designer | sonnet (`claude-sonnet-5-5`), eskalasi opus (`claude-opus-5-5`) | /validate-tiket tim: desain/mockup, reproduksi bug UI | menulis repo/tiket/Docs |
+| Product Designer | sonnet (`claude-sonnet-5-5`), eskalasi opus (`claude-opus-5-5`) | /validate-tiket tim: prototipe desain + state layar, reproduksi bug UI | menulis repo/tiket/Docs |
 | Contract Runner | sonnet (`claude-sonnet-5-5`) | /validate-tiket tim: Schemathesis + Pact endpoint tiket, diff kontrak; /develop-tiket: Matriks env (dev/beta/live) | fuzzing/menulis data ke beta/live, menulis repo/tiket/Docs |
 | HoE | opus (`claude-opus-5-5`) | /validate-tiket tim: codebase vs blueprint, kontrak API, bug logika/API | menulis repo/tiket/Docs |
 | Spesialis eskalasi | fable (`claude-fable-5-2`), on-demand | /validate-tiket tim: hanya saat pemicu eskalasi | menulis repo/tiket/Docs, memutuskan |
@@ -55,7 +107,7 @@ Di semua skill/agen: "komentar tiket" dan "pindah status" = baris tabel ini untu
 | Auditor | opus (`claude-opus-5-5`) | /audit-issue: kode, log, reproduksi | menulis repo/tiket |
 | Analis | opus (`claude-opus-5-5`) | /audit-issue: lampiran | menulis repo/tiket |
 
-Management (SPV, Planner, Validator, Reviewer, Release) memutuskan dan berbicara ke luar: platform tiket, Claude Docs, git remote, Firebase/TestFlight. Development (Coder, QA) hanya kode dan device; satu-satunya akses remote Coder = push branch tiketnya sendiri ke `origin`. Planner hanya penasihat SPV: menulis dokumen rencana di Claude Docs, tidak berbicara ke agen lain atau ke luar. Tim validasi (PdM, Product Designer, Contract Runner, HoE, Spesialis eskalasi, PjM) hanya-baca dan melapor ke Validator (SPV validasi), yang menulis laporan, komentar tiket, dan pindah status. Housekeeping = skrip shell, tanpa agen. Model diubah di `~/.agent-workflow/repo/agents/<peran>.md` (frontmatter `model:` berlaku di Claude Code; agen lain memakai model sesinya sendiri).
+Management (SPV, Planner, Validator, Reviewer, Release) memutuskan dan berbicara ke luar: platform tiket, platform dokumentasi, git remote, Firebase/TestFlight. Development (Coder, QA) hanya kode dan device; satu-satunya akses remote Coder = push branch tiketnya sendiri ke `origin`. Planner hanya penasihat SPV: menulis dokumen rencana di platform dokumentasi, tidak berbicara ke agen lain atau ke luar. Tim validasi (PdM, Product Designer, Contract Runner, HoE, Spesialis eskalasi, PjM) hanya-baca dan melapor ke Validator (SPV validasi), yang menulis laporan, komentar tiket, dan pindah status. Housekeeping = skrip shell, tanpa agen. Model diubah di `~/.agent-workflow/repo/agents/<peran>.md` (frontmatter `model:` berlaku di Claude Code; agen lain memakai model sesinya sendiri).
 
 ## Mode kerja
 - **Diawasi**: sesi biasa, user menyetujui izin.
@@ -101,7 +153,7 @@ Workspace = item Orca tempat terminal agen tampil: git worktree, atau workspace 
     |---|---|
     | Hotfix | `upstream/<primary>` atau tag versi live; sementara ditangani manual dengan bertanya (`--hotfix` belum ada) |
     | Feature request / fix / chore / docs lainnya | `upstream/<protected>` |
-    Jenis tiket ragu → tanya. Jangan pakai branch lokal yang bisa basi. Catat base + hash commit (`git rev-parse --short <base>`) di rencana Docs.
+    Jenis tiket ragu → tanya. Jangan pakai branch lokal yang bisa basi. Catat base + hash commit (`git rev-parse --short <base>`) di rencana.
   - Checkout domain tetap di **branch batch** (lokal saja). Tiap tiket punya **worktree tiket** sendiri sejajar checkout domain, `<repo>-<nomor>` (nomor = angka KODE, mis. `brighton-android-11135`): `git -C <checkout domain> worktree add ../<repo>-<nomor> -b <feature|fix|...>/<KODE> <base>`. Tulis path apa adanya, tanpa variabel (guard memeriksa teks perintah). Sudah ada → pakai, jangan buat ulang; cek `git rev-list --count HEAD..<base>`: tertinggal (>0) → laporkan jumlah commit lalu tanya user rebase/merge atau lanjut apa adanya (branch mungkin sudah di-push dan direview; jangan otomatis). Catat worktree yang dibuat batch ini di rencana Docs.
   - Tiket berbeda jalan **paralel** di worktree masing-masing. Beberapa coder di satu tiket hanya bila file/modulnya terpisah.
 - **Cadangan (C):** tidak aman dibagi (coder menyentuh file yang sama, worktree dipakai batch lain) → satu agen (solo) saja, atau berhenti dan tanya.
@@ -149,7 +201,7 @@ Di `/audit-issue`, worker reproduksi memakai nama QA (Paijo, Euis, Ningsih) teta
 - Branch kerja: `feature/` `fix/` `hotfix/` `docs/` `chore/` + kode tiket (mis. `fix/PROJ-1234`), dibuat di downstream.
 - Commit menyebut kode tiket (dibaca `release-trace.sh`).
 - Tag versi `vX.Y.Z` (beranotasi) dibuat Release setelah PR rilis di-merge manusia, di commit hasil merge, lalu di-push ke `upstream` dan `origin`. Tag tidak pernah di-force atau dihapus.
-- Push hanya oleh Release: branch hanya ke `origin`; tag versi ke `upstream` dan `origin`.
+- Push hanya oleh Release: branch hanya ke `origin`; tag versi ke `upstream` dan `origin`. Pengecualian: Validator mem-push branch tiket yang hanya berisi commit laporan validasi (`docs/tickets/<KODE>/`), dan Release/SPV mem-push branch `docs/rilis-vX.Y.Z`, keduanya hanya ke `origin`.
 
 ## Setup status tiket (sekali per project)
 Hanya status **Todo**, **In Progress**, dan **Ready To Review** yang boleh dipakai agen (jangan pernah Done / tutup issue). Hook menolak pindah status sebelum project punya daftar. Tulis daftar lewat Bash (bukan Edit/Write), gabungkan dengan isi lama.
@@ -185,4 +237,4 @@ Pindah status: `glab issue update <n> --unlabel <lama> --label <baru>`.
 **Tanpa platform.** Tidak ada setup; agen menyebut status yang disarankan di chat dan user yang memindah.
 
 ## Gaya tulis (laporan, komentar tiket, pertanyaan)
-Bahasa Indonesia, singkat padat, ramah pemula; tabel dan diagram mermaid lebih dulu daripada paragraf. Komentar tiket: humanis dan mudah dipahami pembaca awam (tanpa istilah teknis), orang pertama "aku", sapaan ramah (Mas/Mba/Kak), baris pertama memuat link laporan Claude Docs. Detail format: `report-format.md`. Kredensial tidak pernah ditulis ke Docs/tiket/MR.
+Bahasa Indonesia, singkat padat, ramah pemula; tabel dan diagram mermaid lebih dulu daripada paragraf. Komentar tiket: humanis dan mudah dipahami pembaca awam (tanpa istilah teknis), orang pertama "aku", sapaan ramah (Mas/Mba/Kak), baris pertama memuat link laporan (platform dokumentasi). Detail format: `report-format.md`. Kredensial tidak pernah ditulis ke dokumen/tiket/MR.

@@ -1,6 +1,6 @@
 # Format laporan
 
-Laporan dipublikasikan ke Claude Docs oleh agen management (Validator/SPV) lewat `mcp__claude_ai_Claude_Docs__batch` / `update`. QA tidak publikasi: QA menulis `${TMPDIR:-/tmp}/qa/<KODE>/report.md` + screenshot bertanda (di luar repo) lalu menyerahkan path-nya ke SPV.
+Laporan ditulis ke **platform dokumentasi** project (`rules.md` → Platform dokumentasi; default folder `docs/` di repo sebagai Markdown + Mermaid, atau Claude Docs lewat `mcp__claude_ai_Claude_Docs__batch` / `update`, Confluence, Notion) oleh agen management (Validator/SPV). Lokasi file: validasi `docs/tickets/<KODE>/validasi.md`, rencana `rencana.md`, uji `uji.md` (gambar di `img/`), audit `docs/audit/<tanggal>-<judul-singkat>.md`, rilis `docs/rilis/vX.Y.Z.md`. QA tidak publikasi: QA menulis `${TMPDIR:-/tmp}/qa/<KODE>/report.md` + screenshot bertanda (di luar repo) lalu menyerahkan path-nya ke SPV.
 
 Gaya: Bahasa Indonesia, singkat padat, ramah pemula. Tabel dan diagram mermaid lebih dulu daripada paragraf. Tanpa kredensial (sebut nama kunci saja, mis. `qa.user1`).
 
@@ -31,7 +31,7 @@ Keputusan parsial boleh. TC yang butuh device lebih dari yang tersedia = **Terta
 
 **Mode tim** (`--tim`): setelah Keputusan, tambah empat bagian sebelum TC, masing-masing menyebut agen sumbernya (`<Nama> (<Label>)`) dan tingkat keyakinan:
 - **Bisnis** (PdM): tujuan, AC ↔ aturan bisnis, celah, pertanyaan untuk user.
-- **Desain** (Product Designer): link mockup yang dipakai (wajib, untuk Planner/Coder), checklist state, selisih mockup vs app.
+- **Desain** (Product Designer): alamat state prototipe yang dipakai (wajib, untuk Planner/Coder) + link handover, checklist state, selisih prototipe vs app (tiket lama: mockup).
 - **Teknis** (HoE + Contract Runner, + Spesialis eskalasi bila dipanggil): dampak ke blueprint, modul yang disentuh, status API/kontrak, ukuran pekerjaan.
 - **Ketergantungan** (PjM): tabel tiket/PR → status → dampak; tabel tiket terkait yang tidak di-link → titik tumpang tindih → selaras/bertabrakan (kutipan); risiko bentrok, saran urutan.
 Di Temuan, sebut ref dokumen yang dibaca (hasil sinkron sumber).
@@ -43,11 +43,11 @@ Di Temuan, sebut ref dokumen yang dibaca (hasil sinkron sumber).
 4. **Satu bagian per TC**: hasil di kalimat pertama, langkah bernomor, screenshot berurutan; untuk API/kontrak tampilkan tabel endpoint → hasil.
 5. **Server**: tabel build variant → env + base URL API; tabel TC × server (dev/beta/live) Lulus/Gagal/Tertahan; endpoint yang sudah dan belum tersedia per server (Matriks env).
 6. **Regresi area terdampak**: modul → flow `area-<modul>` → Lulus/Gagal/Tertahan; flow baru yang ditambahkan ke suite.
-7. **UI vs mockup** (tiket UI): tabel layar/state → sesuai/beda, screenshot bertanda di samping acuan mockup.
+7. **UI vs prototipe** (tiket UI): tabel layar → alamat state prototipe → sesuai/beda, screenshot app bertanda di samping screenshot state prototipe yang sama (tiket lama: mockup); token yang dipakai.
 8. **Temuan**: branch + commit, nomor build dev/beta + link distribusi, data uji, checklist tindak lanjut.
 
 ## Laporan audit (`/audit-issue`)
-Satu dokumen per audit, dibuat di awal audit dengan blok `pending` per bagian, lalu diisi dan dirapikan menjadi laporan final (dokumen yang sama). Urutan bagian:
+Satu dokumen per audit (folder `docs/` → file di `${TMPDIR:-/tmp}/audit/<slug>/docs/audit/`, tidak di-commit agen), dibuat di awal audit dengan blok `pending` per bagian, lalu diisi dan dirapikan menjadi laporan final (dokumen yang sama). Urutan bagian:
 
 1. **Ringkasan untuk awam** (3–5 kalimat): apa yang ditanyakan, jawabannya, dan saran utama.
 2. **Permintaan asli** + daftar lampiran (terbaca / gagal + alasan).
@@ -68,30 +68,30 @@ Ditulis seperti rekan satu tim yang sopan, dan bisa dipahami pembaca awam (PM, Q
 
 **Gaya**
 - Orang pertama **aku**, hangat dan to the point. Hindari "Agen telah…", "Berikut hasil…", kata kaku, emoji berlebihan (paling banyak satu, mis. 🙏).
-- **Bahasa awam:** kalimat pendek, kata sehari-hari. Jelaskan dampaknya bagi pengguna, bukan detail teknisnya. Hindari istilah teknis (endpoint, 404, AC, TC, emulator, merge, build number); kalau terpaksa, beri arti singkat dalam kurung. Detail teknis cukup di laporan Claude Docs dan PR/MR.
+- **Bahasa awam:** kalimat pendek, kata sehari-hari. Jelaskan dampaknya bagi pengguna, bukan detail teknisnya. Hindari istilah teknis (endpoint, 404, AC, TC, emulator, merge, build number); kalau terpaksa, beri arti singkat dalam kurung. Detail teknis cukup di laporan dan PR/MR.
 - **Sapaan**: sapa orang yang dituju (reporter untuk validasi; reviewer/assignee untuk Ready To Review). Pakai sapaan yang sudah dipakai tim untuk orang itu di komentar tiket (mis. "Mas Dimas", "Mba Rina"). Belum ada contoh → **Kak <nama depan>**. Jangan menebak mas/mba dari nama.
-- Baris pertama **selalu** memuat link laporan Claude Docs, dibungkus kalimat sapaan.
+- Baris pertama **selalu** memuat link laporan (platform dokumentasi; folder `docs/` → URL file di branch `origin`), dibungkus kalimat sapaan.
 - Isi: apa yang aku cek, hasilnya, lalu apa yang perlu dari mereka (jika ada). Tutup dengan terima kasih atau tawaran bantu.
 - Kabar kurang enak (tidak layak, tertahan) disampaikan jujur tapi lembut, dengan alasan dan jalan keluar.
 - Tanpa kredensial; sebut nama kunci saja.
 
 **Contoh — validasi layak dengan catatan**
 ```
-Halo Kak Rina, aku sudah cek tiket ini ya. Laporan lengkapnya di sini: <link Claude Docs>
+Halo Kak Rina, aku sudah cek tiket ini ya. Laporan lengkapnya di sini: <link laporan>
 Tiket ini bisa mulai dikerjakan. Ada satu poin yang belum bisa aku coba, yaitu pesan salah saat nomor HP keliru, karena aku butuh satu HP Android lagi untuk mengetesnya.
 Tiketnya aku pindah ke In Progress. Kalau ada HP cadangan, boleh kabari aku ya, nanti langsung aku lengkapi. Terima kasih 🙏
 ```
 
 **Contoh — tidak layak**
 ```
-Halo Mas Dimas, hasil pengecekanku ada di sini: <link Claude Docs>
+Halo Mas Dimas, hasil pengecekanku ada di sini: <link laporan>
 Untuk sementara tiket ini belum bisa aku lanjutkan, karena halaman daftar pesanan di server uji belum bisa dibuka, jadi fitur ini belum bisa dicoba.
 Tiketnya aku biarkan di Todo dulu. Begitu servernya siap, cukup kabari aku dan aku cek ulang. Makasih ya!
 ```
 
 **Contoh — Ready To Review**
 ```
-Halo Kak Sari, perubahan di tiket ini sudah siap dicek. Laporan ujinya ada di sini: <link Claude Docs>
+Halo Kak Sari, perubahan di tiket ini sudah siap dicek. Laporan ujinya ada di sini: <link laporan>
 Semua yang diminta di tiket sudah aku coba di iPhone dan Android, dan hasilnya sesuai.
 Aplikasi versi uji: <link Firebase> · Perubahan kode: <link PR>
 Kalau ada yang kurang pas, tinggal kabari aku, nanti aku perbaiki. Terima kasih sudah meluangkan waktu!
@@ -100,7 +100,7 @@ Kalau ada yang kurang pas, tinggal kabari aku, nanti aku perbaiki. Terima kasih 
 Kirim lewat adapter platform (`rules.md` → Platform tiket; Jira: `mcp__claude_ai_Atlassian__addCommentToJiraIssue`). Tanpa platform → tulis komentarnya di chat untuk user.
 
 ## Laporan rilis (/branch-manager)
-Dokumen Claude Docs berjudul `Perubahan rilis vX.Y.Z`. Urutan isi:
+Dokumen `Perubahan rilis vX.Y.Z` (folder `docs/` → `docs/rilis/vX.Y.Z.md` di branch `docs/rilis-vX.Y.Z`, lihat `rules.md`). Urutan isi:
 1. Diagram mermaid alur: branch tiket → `<protected>` → `<primary>` → tag.
    ```mermaid
    flowchart LR

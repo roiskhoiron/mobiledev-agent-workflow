@@ -4,7 +4,14 @@ Tim agen AI coding (Claude Code, Codex, Gemini CLI, Cursor, OpenCode) + Orca unt
 
 **Coding agent bebas dipilih.** `install.sh` menanyakan agen mana yang dipasangi (satu, beberapa, atau semua) dan scope-nya: **global** (semua project di komputer ini) atau **project** (satu project saja). Fitur penuh (mode `--tim` dengan teammate) tetap paling lengkap di Claude Code; di agen lain `--tim` jatuh ke solo. Detail: [Pasang](docs/pasang.md#pilih-coding-agent-dan-scope).
 
-**Platform tiket tidak ditentukan sejak awal.** Workflow bisa dipakai dengan Jira, GitHub Projects, GitLab Issue Board, atau tanpa platform (manual). Nilai awalnya kosong (`none`): saat perintah pertama di sebuah project, agen **bertanya dulu** platform mana yang dipakai, lalu menyimpannya di memory project. Bingung memilih? Agen menyarankan board bawaan host git project: GitHub Projects (repo di GitHub) atau GitLab Issue Board (repo di GitLab). Detail: [Platform tiket](docs/alur-kerja.md#platform-tiket).
+**Platform tiket dan platform dokumentasi dicatat per project.** Saat perintah pertama di sebuah project, agen bertanya dua hal lalu menyimpannya di memory project:
+
+| Pilihan | Opsi | Tanpa jawaban lain |
+| --- | --- | --- |
+| Platform tiket (papan kanban) | GitHub Projects, Jira, GitLab Issue Board, tanpa platform | **GitHub Projects** |
+| Platform dokumentasi (tempat laporan) | folder `docs/` di repo, Claude Docs, Confluence, Notion | **folder `docs/`** (Markdown + Mermaid) |
+
+Dengan folder `docs/`, rencana dan laporan uji tiket masuk PR/MR yang sama dengan kodenya (`docs/tickets/<KODE>/`), jadi ikut direview. Acuan UI adalah **prototipe per state + halaman handover + token hasil bangun**, bukan gambar mockup. Detail: [Platform tiket & dokumentasi](docs/alur-kerja.md#platform-tiket).
 
 Status: **v1 terpasang**, siap uji coba di tiket nyata.
 
@@ -27,7 +34,7 @@ Ketik perintah ini di coding agent-mu (di Claude Code: `/nama-perintah`; agen la
 | `/validate-tiket KODE... [--solo\|--tim]` | Cek tiket layak dikerjakan; bug direproduksi di device. `--tim`: dibagi ke PdM, Product Designer, Contract Runner, HoE, PjM (+ Spesialis eskalasi). Hasil: laporan bergambar + komentar tiket | mana saja |
 | `/develop-tiket KODE... [--solo\|--tim] [--batch\|--separate] [--uat]` | Rencana, kode (TDD), review, uji di device, build, PR/MR, komentar tiket, tiket ke Ready To Review | workspace domain |
 | `/rilis-tiket KODE...` | Tindak lanjut feedback QA per tiket: kembalikan ke Todo, build variant lain (Beta/Prod), atau audit + merge PR tiket | root project atau domain |
-| `/branch-manager --rilis KODE` | Rilis per versi: tracing perubahan ke tiket/PR/programmer, regresi penuh di build beta, laporan Claude Docs, PR rilis, build live + smoke live, tag setelah PR rilis di-merge manusia | root project atau domain |
+| `/branch-manager --rilis KODE` | Rilis per versi: tracing perubahan ke tiket/PR/programmer, regresi penuh di build beta, laporan rilis, PR rilis, build live + smoke live, tag setelah PR rilis di-merge manusia | root project atau domain |
 | `/audit-issue "teks" [--solo\|--tim] [lampiran...]` | Telusuri keluhan yang belum jadi tiket, **hanya-baca**. Hasil: laporan + saran tiket | mana saja |
 
 Contoh (kode Jira; di GitHub/GitLab mis. `GH-42` / `GL-42`):
@@ -54,7 +61,8 @@ Semua flag dan alur tiap perintah: [docs/alur-kerja.md](docs/alur-kerja.md).
 | **Guard** | Hook yang memblokir perintah berbahaya sebelum dijalankan |
 | **Platform tiket** | Tempat tiket dan kolom statusnya: Jira, GitHub Projects, GitLab Issue Board, atau tanpa platform. Dipilih per project, ditanyakan agen di awal |
 | **KODE** | Kode tiket sesuai platform, mis. `PROJ-1234` (Jira), `GH-42` (GitHub issue #42), `GL-42` (GitLab issue #42) |
-| **Claude Docs** | Tempat laporan bergambar; link-nya ditaruh di baris pertama komentar tiket |
+| **Platform dokumentasi** | Tempat laporan bergambar (validasi, rencana, uji, audit, rilis). Default folder `docs/` di repo; bisa Claude Docs, Confluence, Notion. Link laporan ditaruh di baris pertama komentar tiket |
+| **Prototipe / handover / token** | Acuan desain UI: alamat tiap state prototipe (`...?state=gagal`), halaman handover (perilaku, catatan per platform), dan token warna/ukuran hasil bangun Style Dictionary |
 | **Downstream / upstream** | `origin` = fork kita (boleh push branch); `upstream` = repo utama (hanya lewat MR) |
 | **TC / AC** | Test case / acceptance criteria tiket. Hasil TC: Lulus, Gagal, atau Tertahan (dengan alasan) |
 

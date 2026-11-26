@@ -68,7 +68,7 @@ bin/ios-ui.sh <udid> steps.json /tmp/qa/PROJ-1234/xcui-1
 | `gh` / `glab` | Membuat PR (GitHub) / MR (GitLab); juga adapter tiket bila platform project GitHub Projects / GitLab Issue Board |
 | Firebase CLI / TestFlight | Upload build dev/beta; prod hanya dengan izin |
 | Orca CLI | Workspace, worktree, panel teammate (lewat plugin agent view Orca) |
-| Atlassian MCP / Claude Docs MCP | Adapter tiket bila platform project = Jira / tulis laporan |
+| Atlassian MCP / Claude Docs MCP | Adapter tiket bila platform project = Jira / tulis laporan bila platform dokumentasi = Claude Docs |
 
 ## Skill pendukung
 Selain empat perintah di repo ini, agen memakai skill yang terpasang di folder skill coding agent-mu (mis. `~/.claude/skills`, `~/.agents/skills`) atau sebagai plugin Claude Code. Skill ini tidak ada di repo; pasang terpisah (lihat [Pasang di komputer lain](pasang.md)).
@@ -85,7 +85,7 @@ Selain empat perintah di repo ini, agen memakai skill yang terpasang di folder s
 | `kotlin-agent-skills` (plugin) | Migrasi dan performa build Kotlin/KMP (AGP 9, CocoaPods → SPM, Kotlin/Native) |
 
 ## MCP yang dipakai
-MCP = konektor yang membuat Claude bisa memakai layanan luar. Claude Docs selalu dipakai; Atlassian **hanya** bila platform tiket project = Jira (GitHub Projects / GitLab Issue Board lewat `gh`/`glab`, tanpa MCP). Keduanya dipasang sebagai konektor di claude.ai:
+MCP = konektor yang membuat Claude bisa memakai layanan luar. Keduanya opsional: Claude Docs **hanya** bila platform dokumentasi project = Claude Docs (default folder `docs/` di repo tanpa MCP); Atlassian **hanya** bila platform tiket project = Jira (GitHub Projects / GitLab Issue Board lewat `gh`/`glab`, tanpa MCP). Keduanya dipasang sebagai konektor di claude.ai:
 
 | MCP | Gunanya | Dipakai oleh | Fungsi yang dipanggil |
 | --- | --- | --- | --- |

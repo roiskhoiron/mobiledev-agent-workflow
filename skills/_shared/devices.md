@@ -1,6 +1,6 @@
 # Device dan screenshot
 
-Aturan utama: **satu device, satu agen, satu waktu.** **Virtual dulu** (simulator/emulator); virtual penuh baru ke device fisik. Satu device virtual menyala per platform. Fitur yang butuh hardware asli langsung device fisik (lihat "Kapan wajib device fisik").
+Aturan utama: **satu device, satu agen, satu waktu.** **Virtual dulu** (simulator/emulator); virtual penuh baru ke device fisik. Satu device virtual menyala per platform. Fitur yang butuh hardware asli langsung device fisik (lihat "Kapan wajib device fisik"). Pengecualian: **reproduksi bug di `/validate-tiket` = fisik dulu, lalu emulator/simulator** (`--prefer-physical`), supaya hasilnya sesuai kondisi pelapor.
 
 ## Device yang ada
 Per platform: **1 virtual + 1 fisik**, jadi paling banyak 2 agen memakai device per platform bersamaan.
@@ -34,7 +34,7 @@ fi
 # lepas setelah selesai (panggilan lain, dev ditulis literal)
 AGENT_LOCK_PID=$PPID "$AGENT_WORKFLOW_DIR/bin/device-lock.sh" release ios:<udid> PROJ-1234-qa1
 ```
-- `device-pick.sh <ios|android> <owner>`: virtual yang sudah menyala → boot virtual bila belum ada yang menyala di platform itu → device fisik yang bebas. Tambah `--physical` = hanya device fisik. Exit 1 = tidak ada yang bebas: tunggu lalu coba lagi, jangan pakai device lain.
+- `device-pick.sh <ios|android> <owner>`: virtual yang sudah menyala → boot virtual bila belum ada yang menyala di platform itu → device fisik yang bebas. Tambah `--physical` = hanya device fisik; `--prefer-physical` = device fisik yang bebas dulu, lalu urutan biasa (reproduksi bug `/validate-tiket`). Exit 1 = tidak ada yang bebas: tunggu lalu coba lagi, jangan pakai device lain.
 - `device-lock.sh who <resource>`: lihat pemilik kunci.
 - Kunci milik proses yang sudah mati otomatis dianggap bebas.
 - Owner = `<KODE>-<peran><n>`, mis. `PROJ-1234-qa1`.

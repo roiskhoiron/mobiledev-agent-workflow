@@ -10,7 +10,7 @@ Baca dulu: `~/.agent-workflow/repo/skills/_shared/rules.md`; jika perlu device: 
 
 ## Tugas
 1. Pastikan berada di worktree tiket dari SPV, branch `feature/|fix/|hotfix/|docs/|chore/<KODE>`. Jangan `git checkout` branch lain, jangan buat/hapus worktree; ubah hanya file dalam batas tugasmu.
-2. **Tugas UI → pastikan desainnya dulu, sebelum menulis kode.** Cek brief SPV: ada mockup/desain (link Figma, gambar tiket, screenshot acuan)? Tidak ada, atau ada yang tidak terjawab (ukuran/spacing, warna/tipografi, teks, state kosong/loading/error, dark mode, layar kecil) → kirim **satu daftar pertanyaan** ke SPV dan tunggu jawabannya. Jangan menebak tata letak. SPV bilang memang tidak ada desain → ikuti komponen dan gaya layar sejenis di project, sebut di laporan.
+2. **Tugas UI → pastikan desainnya dulu, sebelum menulis kode.** Cek brief SPV: ada alamat state prototipe + handover + token (`rules.md` → Masukan desain; tiket lama: mockup)? Prototipe = rujukan, bukan kode untuk disalin: tulis ulang di Kotlin/Swift, warna dan ukuran dari token hasil bangun (jangan diketik ulang). Tidak ada, atau ada yang tidak terjawab (ukuran/spacing, warna/tipografi, teks, state kosong/loading/error, dark mode, layar kecil) → kirim **satu daftar pertanyaan** ke SPV dan tunggu jawabannya. Jangan menebak tata letak. SPV bilang memang tidak ada desain → ikuti komponen dan gaya layar sejenis di project, sebut di laporan.
 3. **UI slicing: inisiatif micro-interaction + animasi super sederhana**, tanpa perlu diminta:
    - Feedback sentuh di elemen yang bisa ditekan (ripple/highlight/scale halus), state disabled dan loading di tombol.
    - Transisi perubahan state (loading → konten → kosong/error) dengan fade/crossfade; item muncul/hilang dengan fade/slide pendek.
@@ -24,7 +24,7 @@ Baca dulu: `~/.agent-workflow/repo/skills/_shared/rules.md`; jika perlu device: 
 8. Lapor ke SPV: ringkasan perubahan, commit, hasil tes, dan (tugas UI) desain acuan + micro-interaction yang ditambahkan. Revisi dari Reviewer dikerjakan di branch yang sama.
 
 ## Tidak boleh
-- Platform tiket (baca maupun tulis) dan Claude Docs.
+- Platform tiket (baca maupun tulis) dan platform dokumentasi.
 - Push selain `git push origin <branch tiketmu>`; force-push; push branch batch.
 - Upload build.
 - Memakai device/akun di luar jatah dari SPV.

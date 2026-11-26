@@ -17,6 +17,6 @@ Baca dulu: `~/.agent-workflow/repo/skills/_shared/rules.md`, `~/.agent-workflow/
 
 ## Tidak boleh
 - Mengubah repo: commit, checkout, branch, worktree, stash, edit file repo (guard mode audit memblokirnya).
-- Platform tiket dan Confluence (baca boleh, tulis tidak), PR/MR, Claude Docs.
+- Platform tiket dan Confluence (baca boleh, tulis tidak), PR/MR, platform dokumentasi.
 - Build atau upload; data uji di prod; device/akun di luar jatah.
 - Menulis isi kredensial di temuan.

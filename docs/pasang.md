@@ -8,7 +8,7 @@
    ```
    Plus: Xcode (juga untuk XCUITest runner), Android SDK (`adb`, emulator, `android`), Orca, dan minimal satu coding agent (Claude Code, Codex CLI, Gemini CLI, Cursor, atau OpenCode). Untuk mode tim: `/config` → Teammate mode → `auto` (lihat [Tim agen](tim-agen.md)).
 2. Plugin Claude Code: `superpowers` dan `ponytail` (lewat `/plugin`); `kotlin-agent-skills` opsional untuk project Kotlin/KMP. Skill pendukung lain ([daftar](alat.md#skill-pendukung)) ada di `~/.claude/skills`: `orca-cli`, `orca-computer-use`, `orchestration` (symlink ke `~/.agents/skills`, dari Orca), `android-cli` (`android init` memasang skill default), `graphify` (`uv tool install graphifyy && graphify install --platform claude`).
-3. Konektor claude.ai: **Claude Docs**; **Atlassian** hanya bila ada project yang memakai Jira. GitHub Projects / GitLab Issue Board cukup `gh`/`glab` (GitHub Projects butuh scope `project`: `gh auth refresh -s project`).
+3. Konektor claude.ai (opsional): **Claude Docs** bila ada project yang menulis laporan ke Claude Docs (default: folder `docs/` di repo, tanpa konektor); **Atlassian** hanya bila ada project yang memakai Jira. GitHub Projects / GitLab Issue Board cukup `gh`/`glab` (GitHub Projects butuh scope `project`: `gh auth refresh -s project`).
 4. Login CLI: `gh auth login`, `glab auth login`, `firebase login`.
 5. Pasang dan cek:
    ```bash

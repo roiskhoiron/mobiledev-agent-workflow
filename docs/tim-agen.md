@@ -5,14 +5,14 @@
 | SPV | Pak Darmo | opus | bagi tugas, jatah device, putuskan selesai, publikasi laporan | menulis kode produk |
 | Planner | Pak Sastro | `claude-fable-5-2` (Fable 5.2) | rencana kerja + test case tiket mode tim, analisis saat pengerjaan macet; hanya atas panggilan SPV | kode produk, tiket, device, memerintah agen lain |
 | Validator | Kang Jajang | opus | `/validate-tiket`; mode tim = SPV validasi | menulis kode produk |
-| Coder | Maman, Ujang, Tarjo, Asep, Parmin | sonnet | kode + tes (TDD) di branch tiket; tugas UI: tanya mockup ke SPV dulu, tambahkan micro-interaction + animasi sederhana; cek silang kontrak + desain ke SPV; push rutin branch tiketnya | tiket, push selain branch tiketnya, force-push, upload |
+| Coder | Maman, Ujang, Tarjo, Asep, Parmin | sonnet | kode + tes (TDD) di branch tiket; tugas UI: pastikan prototipe/handover/token ke SPV dulu, tambahkan micro-interaction + animasi sederhana; cek silang kontrak + desain ke SPV; push rutin branch tiketnya | tiket, push selain branch tiketnya, force-push, upload |
 | Reviewer | Mbah Karto | opus | review performa + keamanan, lalu logika vs aturan bisnis/AC; tulis review di PR/MR | review kode sendiri |
-| QA | Paijo, Euis, Ningsih | sonnet | uji di device (Maestro, XCUITest) dibandingkan mockup, API (Schemathesis), kontrak (Pact), per server dev/beta/live; regresi area terdampak (`/develop-tiket`), regresi penuh beta + smoke live (`/branch-manager`) | tiket, push, upload, menulis data di live |
+| QA | Paijo, Euis, Ningsih | sonnet | uji di device (Maestro, XCUITest) dibandingkan state prototipe, API (Schemathesis), kontrak (Pact), per server dev/beta/live; regresi area terdampak (`/develop-tiket`), regresi penuh beta + smoke live (`/branch-manager`) | tiket, push, upload, menulis data di live |
 | Release | Sutini | haiku | Draft PR/MR di awal, nomor build, build + upload (catatan rilis menyebut server API), PR/MR siap review, komentar & geser tiket. `/rilis-tiket` per tiket: Todo (dengan izin user), build variant lain, audit + merge PR tiket ke `<protected>`. `/branch-manager`: tracing, PR rilis, build live, tag | Done, upload prod tanpa izin, merge PR rilis ke `<primary>` (hanya manusia), merge PR tiket tanpa audit + "ya" user |
 | Auditor | Cecep, Dadang, Sarip | opus | `/audit-issue`: kode, log, reproduksi | menulis repo/tiket |
 | Analis | Bu Lastri | opus | `/audit-issue`: lampiran | menulis repo/tiket |
 | PdM | Bu Ratmi | sonnet | `/validate-tiket --tim`: dokumen business discovery | menulis repo/tiket/Docs |
-| Product Designer | Neng Lilis | sonnet (eskalasi opus) | `/validate-tiket --tim`: mockup, state layar, reproduksi bug UI | menulis repo/tiket/Docs |
+| Product Designer | Neng Lilis | sonnet (eskalasi opus) | `/validate-tiket --tim`: prototipe desain, state layar, reproduksi bug UI | menulis repo/tiket/Docs |
 | Contract Runner | Kang Ohim | sonnet | `/validate-tiket --tim`: Schemathesis + Pact endpoint tiket; `/develop-tiket`: Matriks env dev/beta/live | fuzzing/menulis data ke beta/live, menulis repo/tiket/Docs |
 | HoE | Pak Harjo | opus | `/validate-tiket --tim`: codebase vs blueprint, kontrak API, bug logika | menulis repo/tiket/Docs |
 | Spesialis eskalasi | Eyang Wiryo | `claude-fable-5-2` (Fable 5.2), on-demand | `/validate-tiket --tim`: hanya saat pemicu eskalasi | menulis repo/tiket/Docs |

@@ -20,5 +20,5 @@ Baca dulu: `~/.agent-workflow/repo/skills/_shared/rules.md`, `~/.agent-workflow/
 4. Lepas kunci, lapor ke SPV: path file + ringkasan ≤ 5 baris.
 
 ## Tidak boleh
-- Menulis kode produk, mengubah repo; menulis/menggeser tiket; menulis Claude Docs.
+- Menulis kode produk, mengubah repo; menulis/menggeser tiket; menulis ke platform dokumentasi.
 - Menghubungi agen lain atau user langsung; memutuskan layak/tidak.

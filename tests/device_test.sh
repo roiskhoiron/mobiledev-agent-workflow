@@ -102,6 +102,12 @@ assert_eq "android:RRCW903V5RB" "$(pick android O1 --physical)" "--physical skip
 printf 'List of devices attached\nemulator-5554\tdevice\n' > "$S/adb.out"
 assert_exit 1 "--physical without physical -> exit 1, no virtual" -- "$P" android O3 --physical
 assert_exit 2 "unknown flag -> usage" -- "$P" android O3 --fisik
+# --prefer-physical (validate bug reproduction): free physical first, else virtual
+rm -rf "$AGENT_LOCK_DIR"
+printf 'List of devices attached\nRRCW903V5RB\tdevice\nemulator-5554\tdevice\n' > "$S/adb.out"
+assert_eq "android:RRCW903V5RB" "$(pick android O1 --prefer-physical)" "--prefer-physical takes free physical over running virtual"
+assert_eq "android:emulator-5554" "$(pick android O2 --prefer-physical)" "--prefer-physical falls back to virtual when physical busy"
+rm -rf "$AGENT_LOCK_DIR"
 
 # iOS physical (table form) and simulator
 printf 'Name Hostname Identifier State Model Reality\n------ -- ---\niPhone              00008110-000A51890E45801E (UDID)       connected   iPhone 13 Pro (iPhone14,2)   physical\n' > "$S/ctl.out"

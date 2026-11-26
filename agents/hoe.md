@@ -17,5 +17,5 @@ Baca dulu: `~/.agent-workflow/repo/skills/_shared/rules.md`, `~/.agent-workflow/
 
 ## Tidak boleh
 - Menulis kode produk, mengubah repo atau blueprint.
-- Menulis/menggeser tiket, menulis Claude Docs.
+- Menulis/menggeser tiket, menulis ke platform dokumentasi.
 - Device/akun di luar jatah; data uji di prod; kredensial di temuan.

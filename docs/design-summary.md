@@ -1,4 +1,4 @@
-# Rancangan Workflow Agen Jira
+# Rancangan Workflow Agen Mobile
 
 Context (not in doc, for builder): Target is Claude Code on a Mac (M6, 24 GB RAM). Deliverables live in ~/.claude (skills, agents/*.md with `model:` frontmatter, settings.json permissions.deny, launchd jobs). Jira via Atlassian MCP; reports via Claude Docs MCP; git hosting may be GitHub (gh) or GitLab (glab) per project. Apps: native Swift / Kotlin / Java, KMP; maybe Flutter/React later. iOS upload via xcodebuild archive+upload (user is App Store Connect admin); Android via Firebase CLI App Distribution. Tools installed: maestro, schemathesis, pact (ruby standalone), firebase-cli, cocoapods, adb, xcrun. Global CLAUDE.md already says: superpowers for big features, ponytail for small fixes.
 
@@ -9,6 +9,13 @@ Tim agen Claude mengerjakan tiket Jira dari Todo sampai Ready To Review lewat `/
 - Tim agen (management + development), sendirian atau beramai-ramai per tiket
 - Pagar keamanan; pembersihan berkala
 Bisa satu atau beberapa tiket.
+
+## Platform tiket, dokumentasi, dan masukan desain (rev 110, 2026-11)
+- Platform tiket dicatat di memory project (platform, lokasi papan, pemetaan kolom, pola kode, alat akses). Ditanya sekali; tanpa jawaban lain = GitHub Projects. Istilah netral: tiket, papan kanban, komentar tiket. Larangan Done berlaku di semua platform.
+- Platform dokumentasi dicatat di memory project. Default folder `docs/` di repo (Markdown + Mermaid): `tickets/<KODE>/{validasi,rencana,uji}.md + img/`, `audit/`, `rilis/vX.Y.Z.md`, `runbooks/`, `adr/`. Rencana dan laporan uji ikut PR/MR tiketnya. Pilihan lain: Claude Docs, Confluence, Notion.
+- Masukan desain = prototipe (alamat tiap state `...?state=`), halaman handover, token hasil bangun (Style Dictionary). Prototipe dirujuk, bukan disalin; QA membandingkan state yang sama; warna/ukuran dari token. Tiket lama yang hanya punya mockup: paling tinggi Layak dengan catatan.
+- Reproduksi bug di /validate-tiket: device fisik dulu, lalu emulator.
+- Skill set per flow (`/setup-board`, `/setup-docs`, `/read-ticket`, `/write-report`, …) masih **usulan** di rancangan; belum dipecah jadi skill terpisah.
 
 ## Alur kanban
 Todo --/validate-tiket layak--> In Progress --/develop-tiket--> Ready To Review --kolega--> Done. Tidak layak: tetap Todo + komentar alasan.

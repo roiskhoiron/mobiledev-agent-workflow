@@ -1,6 +1,6 @@
 ---
 name: branch-manager
-description: Rilis per versi dari branch integrasi ke branch produksi - tracing tiap commit ke tiket/PR/programmer, laporan rilis di Claude Docs, PR rilis, build live, tag setelah PR rilis di-merge manusia. Dipanggil lewat `/branch-manager --rilis KODE-TIKET`. Use when asked to prepare a production release, release notes, or a release PR; kata kunci - rilis versi, branch manager, release notes, PR rilis, tag versi.
+description: Rilis per versi dari branch integrasi ke branch produksi - tracing tiap commit ke tiket/PR/programmer, laporan rilis di platform dokumentasi, PR rilis, build live, tag setelah PR rilis di-merge manusia. Dipanggil lewat `/branch-manager --rilis KODE-TIKET`. Use when asked to prepare a production release, release notes, or a release PR; kata kunci - rilis versi, branch manager, release notes, PR rilis, tag versi.
 argument-hint: --rilis KODE-TIKET
 ---
 Siapkan rilis satu versi (`$ARGUMENTS`; `KODE-TIKET` = tiket tempat laporan rilis dikomentari). Sesi ini = **Release (Agen First)**: ikuti `~/.agent-workflow/repo/agents/release.md`. Agen mengerjakan semua langkah dulu, lalu bertanya ke user di chat: **Konfirmasi / Tolak / Ikuti rekomendasi agen**. Merge PR tiket per tiket bukan di sini: itu `/rilis-tiket`. Argumen selain `--rilis KODE` (mis. `--hotfix`) → belum ada, berhenti dan tanya.
@@ -10,10 +10,10 @@ Baca dulu (jangan disalin ke sini): `~/.agent-workflow/repo/skills/_shared/rules
 ```mermaid
 flowchart LR
   F[fetch + cek leluhur] --> T[Tracing commit] --> C[Cek Done + Matriks env live]
-  C --> RG[Regresi penuh di build beta] --> D[Docs + komentar tiket] --> P[PR rilis] --> Q{User}
+  C --> RG[Regresi penuh di build beta] --> D[Laporan rilis + komentar tiket] --> P[PR rilis] --> Q{User}
   Q -- Tolak --> S[Berhenti]
   Q -- Keluarkan tiket X --> R[PR revert] --> F
-  Q -- Konfirmasi --> B[Build live] --> SM[Smoke live] --> W[Manusia merge PR rilis] --> G[Tag vX.Y.Z] --> U[Perbarui Docs + tiket]
+  Q -- Konfirmasi --> B[Build live] --> SM[Smoke live] --> W[Manusia merge PR rilis] --> G[Tag vX.Y.Z] --> U[Perbarui laporan + tiket]
 ```
 
 ## Langkah
@@ -29,7 +29,7 @@ flowchart LR
 4. **Cek isi:** tiket belum **Done** atau commit tak terlacak → tandai, masuk rekomendasi (mis. keluarkan tiket X, tunda rilis, minta kolega memindah ke Done).
 5. **Matriks env live** untuk endpoint semua tiket (method aman saja, seperti `/develop-tiket` langkah 3; tanpa izin per run, tanpa kunci device). **Belum ada** / **Beda kontrak** → tandai, masuk rekomendasi.
 5b. **Regresi penuh di beta** (gerbang utama sebelum manusia ditanya): buat worktree rilis `git -C <checkout> worktree add --detach ../<repo>-rilis-vX.Y.Z <sha-rilis>` (dipakai lagi di langkah 9), kunci `build:heavy`, build **beta variant** Android + iOS untuk dipasang di device (tanpa upload), lepas kunci. Panggil **QA** (`qa.md`, mode regresi penuh) dengan suite dari memory project (`rules.md` → Lokasi; belum ada → tanya, simpan), jatah device + akun uji lewat `device-pick.sh`/`device-lock.sh` (owner `rilis-vX.Y.Z-qa<n>`). Data uji berawalan `vX.Y.Z`. Flow gagal → cocokkan dengan tiket yang menyentuh modulnya (tabel tracing), masuk rekomendasi (keluarkan tiket X / tunda rilis). Suite kosong → tulis "belum ada suite regresi" sebagai risiko di rekomendasi, jangan dianggap lulus.
-6. **Claude Docs `Perubahan rilis vX.Y.Z`** sesuai `report-format.md` → Laporan rilis (mermaid, versi + hash ref termasuk `<sha-rilis>`, tabel perubahan, tak terlacak/belum Done, Matriks env live, hasil regresi beta, rekomendasi).
+6. **Dokumen `Perubahan rilis vX.Y.Z`** di platform dokumentasi (checklist `rules.md` → Platform dokumentasi). Folder `docs/` (default): worktree `git -C <checkout> worktree add ../<repo>-rilis-vX.Y.Z-docs -b docs/rilis-vX.Y.Z upstream/<protected>`, tulis `docs/rilis/vX.Y.Z.md` (+ `img/`), commit `docs: laporan rilis vX.Y.Z`, push ke `origin`, PR ke `<protected>` (tidak ikut `<sha-rilis>`); link = URL file di branch `origin`; hapus worktree itu setelah push. Isi sesuai `report-format.md` → Laporan rilis (mermaid, versi + hash ref termasuk `<sha-rilis>`, tabel perubahan, tak terlacak/belum Done, Matriks env live, hasil regresi beta, rekomendasi).
 7. **Komentar di `KODE-TIKET`** (komentar tiket lewat adapter platform, format yang sama): baris pertama link dokumen, lalu versi, jumlah perubahan, rekomendasi. `KODE-TIKET` tidak ditransisikan.
 8. **PR rilis** (tanpa push branch). Isi (file sementara `<body>`): link dokumen, `<sha-rilis>`, tabel perubahan, catatan **"merge dengan merge commit, bukan squash"**. Baru: `gh pr create --repo <upstream> --base <primary> --head <protected> --draft --title "Rilis vX.Y.Z" --body-file <body>` / `glab mr create -R <upstream> --source-branch <protected> --target-branch <primary> --draft --title "Rilis vX.Y.Z" --description "$(cat <body>)"`. Sudah ada → `gh pr edit <N> --repo <upstream> --title "Rilis vX.Y.Z" --body-file <body>` / `glab mr update <N> -R <upstream> --title "Rilis vX.Y.Z" --description "$(cat <body>)"`.
 

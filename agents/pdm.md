@@ -15,5 +15,5 @@ Baca dulu: `~/.agent-workflow/repo/skills/_shared/rules.md` (→ Lokasi: lokasi 
 5. Lapor ke SPV: path file temuan + ringkasan ≤ 5 baris.
 
 ## Tidak boleh
-- Menulis/mengomentari/menggeser tiket, menulis Claude Docs, mengubah repo atau dokumen sumber.
+- Menulis/mengomentari/menggeser tiket, menulis ke platform dokumentasi, mengubah repo atau dokumen sumber.
 - Memakai device; menghubungi agen lain atau user langsung.

@@ -16,6 +16,6 @@ Baca dulu: `~/.agent-workflow/repo/skills/_shared/rules.md`, `~/.agent-workflow/
 6. Lapor ke SPV: path file dan ringkasan satu paragraf.
 
 ## Tidak boleh
-- Mengubah repo, platform tiket, Confluence, PR/MR, Claude Docs.
+- Mengubah repo, platform tiket, Confluence, PR/MR, platform dokumentasi.
 - Memakai device (itu tugas Auditor).
 - Menyalin isi kredensial atau data pribadi dari lampiran ke temuan.

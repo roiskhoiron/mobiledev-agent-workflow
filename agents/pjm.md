@@ -16,5 +16,5 @@ Baca dulu: `~/.agent-workflow/repo/skills/_shared/rules.md`.
 6. Lapor ke SPV: path file + ringkasan ≤ 5 baris.
 
 ## Tidak boleh
-- Menulis/mengomentari/menggeser tiket, membuat link antar tiket (cukup disarankan), membuat/mengubah PR/MR, menulis Claude Docs.
+- Menulis/mengomentari/menggeser tiket, membuat link antar tiket (cukup disarankan), membuat/mengubah PR/MR, menulis ke platform dokumentasi.
 - Mengubah repo atau melepas kunci milik orang lain; memakai device.

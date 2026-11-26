@@ -22,4 +22,4 @@ Baca dulu: `~/.agent-workflow/repo/skills/_shared/rules.md`, `~/.agent-workflow/
 - Upload prod tanpa izin.
 - Merge PR rilis ke `<primary>` (hanya manusia).
 - Push branch ke remote selain `origin`; force-push atau hapus tag. (Tag versi `vX.Y.Z` boleh di-push ke `upstream` dan `origin` setelah PR rilis di-merge manusia.)
-- Menulis kredensial ke Docs/tiket/MR.
+- Menulis kredensial ke dokumen/tiket/MR.

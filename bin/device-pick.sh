@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Usage: device-pick.sh <ios|android> <owner> [--physical]
+# Usage: device-pick.sh <ios|android> <owner> [--physical|--prefer-physical]
 # Prints the acquired resource (ios:<udid> | android:<serial>); exit 1 if none.
 # Default order: running virtual -> boot new virtual (if this platform has <MAX_VIRTUAL running) -> connected physical.
 # --physical (feature needs real hardware, e.g. APNs): connected physical only, never virtual.
+# --prefer-physical (bug reproduction in /validate-tiket): free connected physical first, then the default order.
 # Env: ADB, XCRUN, EMULATOR (command overrides for tests); PICK_BOOT_TIMEOUT (seconds, default 180)
 # for emulator boot and for waiting on the global boot lock; AGENT_LOCK_PID: see device-lock.sh.
 plat=$1 owner=$2 mode=${3:-}
@@ -11,9 +12,9 @@ TMO=${PICK_BOOT_TIMEOUT:-180}
 LOCK="$(dirname "$0")/device-lock.sh"
 export AGENT_LOCK_PID=${AGENT_LOCK_PID:-$PPID}
 MAX_VIRTUAL=1 # per platform: the Mac has one simulator and one emulator in rotation
-usage() { echo "usage: $0 <ios|android> <owner> [--physical]" >&2; exit 2; }
+usage() { echo "usage: $0 <ios|android> <owner> [--physical|--prefer-physical]" >&2; exit 2; }
 case $plat in ios|android) ;; *) usage ;; esac
-case $mode in ''|--physical) ;; *) usage ;; esac
+case $mode in ''|--physical|--prefer-physical) ;; *) usage ;; esac
 JQ=; for j in /usr/bin/jq jq; do command -v "$j" >/dev/null 2>&1 && { JQ=$j; break; }; done
 [ -n "$JQ" ] || { echo "jq not found; cannot count virtual devices" >&2; exit 1; }
 
@@ -48,6 +49,7 @@ physical() {
 if [ "$mode" = --physical ]; then
   physical; echo "no physical $plat device available" >&2; exit 1
 fi
+[ "$mode" = --prefer-physical ] && physical  # exits on success; otherwise fall through to virtual
 
 case $plat in
   android)

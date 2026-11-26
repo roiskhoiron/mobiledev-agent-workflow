@@ -16,13 +16,38 @@ flowchart TD
   M -- ada --> C[Cek koneksi adapter] --> L[Lanjut perintah]
   M -- belum / none --> Q[Agen bertanya ke kamu]
   Q -- kamu memilih --> W[Simpan di memory project + setup status]
-  Q -- bingung --> R[Saran: GitHub Projects / GitLab Issue Board sesuai host git]
+  Q -- bingung --> R[Default: GitHub Projects]
   R --> W --> C
 ```
 
 - Default = **none**: agen tidak menebak dari konektor yang kebetulan terpasang, tapi **bertanya** sebelum langkah apa pun.
 - Setelah dipilih, agen menanyakan sekali status mana yang boleh ia pakai (Todo, In Progress, Ready To Review). Daftar itu disimpan di `~/.agent-workflow/jira-transitions.json` (Jira) atau `~/.agent-workflow/ticket-status.json` (GitHub/GitLab).
 - Tabel operasi per platform (baca, komentar, pindah status): `skills/_shared/rules.md` → Platform tiket.
+- Tanpa jawaban lain (bingung/"terserah"), pilihannya **GitHub Projects**.
+
+## Platform dokumentasi
+Laporan agen (validasi, rencana + test case, uji, audit, rilis) ditulis ke platform dokumentasi yang dicatat di memory project. Belum tercatat → agen bertanya; tanpa jawaban lain = **folder `docs/` di repo** (Markdown + Mermaid). Pilihan lain: Claude Docs, Confluence, Notion (susunan sama).
+
+```text
+docs/
+  tickets/<KODE>/     validasi.md, rencana.md, uji.md, img/
+  audit/              <tanggal>-<judul-singkat>.md
+  rilis/              vX.Y.Z.md
+  runbooks/           langkah operasional
+  adr/                catatan keputusan
+```
+
+| Laporan | Di mana (folder `docs/`) | Link di komentar tiket |
+| --- | --- | --- |
+| Validasi | `docs/tickets/<KODE>/validasi.md` di branch tiket, di-push ke `origin` oleh Validator | URL file di branch `origin` |
+| Rencana + laporan uji | `rencana.md`, `uji.md` di branch tiket → **ikut PR/MR tiket** dan direview bersama kodenya | URL file / PR |
+| Audit | file di `${TMPDIR:-/tmp}/audit/<slug>/docs/audit/` (mode audit hanya-baca); kamu yang meng-commit | path di chat |
+| Rilis | `docs/rilis/vX.Y.Z.md` di branch `docs/rilis-vX.Y.Z` → PR ke `<protected>` (tidak ikut `sha-rilis`) | URL file di branch `origin` |
+
+Branch tiket yang hanya berisi laporan validasi **bukan** jejak pengerjaan; `/develop-tiket` melanjutkan di branch itu.
+
+## Masukan desain
+Acuan UI adalah prototipe dari workflow UI/UX: **alamat tiap state** (`.../prototypes/<KODE>/<layar>.html?state=gagal`), **halaman handover** (tujuan, perilaku, token, catatan per platform), dan **token hasil bangun** (resource Android/Compose, berkas Swift dari Style Dictionary). Prototipe dirujuk, tidak disalin; warna dan ukuran dari token; QA membandingkan layar app dengan state prototipe yang sama. Tiket lama yang hanya punya mockup tetap bisa dikerjakan, paling tinggi **Layak dengan catatan**.
 
 ## Papan kanban tiket
 Setiap tiket bergerak dari kiri ke kanan. Satu kolom = satu status tiket.
@@ -53,16 +78,16 @@ flowchart LR
 | Penolakan | Hasil validasi ulang |
 |---|---|
 | Implementasi meleset | **Layak** + daftar revisi |
-| Requirement berubah/kurang | Cek ulang bisnis/mockup/kontrak; tanya user/PM bila perlu; keputusan lewat tabel di bawah |
+| Requirement berubah/kurang | Cek ulang bisnis/prototipe/kontrak; tanya user/PM bila perlu; keputusan lewat tabel di bawah |
 
 ## `/validate-tiket`
 1. Baca tiket, komentar, dan link terkait; catat AC dan versi.
 2. **Bug:** pasang versi yang disebut tiket (kosong = build dev/beta terbaru), reproduksi di device, screenshot tiap langkah dengan kotak merah.
    **Fitur:** cek requirement lengkap, spec API ada di repo, desain tersedia.
-3. Laporan di Claude Docs, lalu komentar tiket: **Layak** / **Layak dengan catatan** / **Tidak layak**.
+3. Laporan di platform dokumentasi (default `docs/tickets/<KODE>/validasi.md`), lalu komentar tiket: **Layak** / **Layak dengan catatan** / **Tidak layak**.
 4. Layak → tiket ke In Progress. Tidak layak → tetap Todo.
 
-**Mode tim (`--tim`):** Validator jadi SPV. Sekali per sesi ia mengambil dokumen terbaru (business discovery, mockup, kontrak API, blueprint; lokasinya per project disimpan di memory project) dan menjalankan `graphify update`. Lalu paralel: **PdM** membaca dokumen bisnis, **Product Designer** mengecek mockup dan mereproduksi bug UI, **Contract Runner** menjalankan Schemathesis/Pact, **HoE** mencocokkan codebase dengan blueprint dan mereproduksi bug logika, **PjM** memantau tiket terkait dan PR terbuka. **Spesialis eskalasi** (Fable 5.2) hanya dipanggil saat ada pemicu: bug logika gagal direproduksi, temuan ambigu, tiket high-risk, atau konflik antar-agen. Semua hanya-baca; Validator menulis satu laporan, komentar tiket, dan transisi. Tiket UI tanpa mockup paling tinggi **Layak dengan catatan**.
+**Mode tim (`--tim`):** Validator jadi SPV. Sekali per sesi ia mengambil dokumen terbaru (business discovery, prototipe desain, kontrak API, blueprint; lokasinya per project disimpan di memory project) dan menjalankan `graphify update`. Lalu paralel: **PdM** membaca dokumen bisnis, **Product Designer** mengecek mockup dan mereproduksi bug UI, **Contract Runner** menjalankan Schemathesis/Pact, **HoE** mencocokkan codebase dengan blueprint dan mereproduksi bug logika, **PjM** memantau tiket terkait dan PR terbuka. **Spesialis eskalasi** (Fable 5.2) hanya dipanggil saat ada pemicu: bug logika gagal direproduksi, temuan ambigu, tiket high-risk, atau konflik antar-agen. Semua hanya-baca; Validator menulis satu laporan, komentar tiket, dan transisi. Tiket UI tanpa mockup paling tinggi **Layak dengan catatan**.
 
 **Tiket terkait dan requirement bermasalah (solo dan tim):** selain tiket yang sudah di-link, Validator (mode tim: PjM) mencari tiket Todo/In Progress yang tidak di-link tapi menyentuh komponen, label, layar, fitur, atau endpoint yang sama, lalu menilai selaras atau bertabrakan. Link antar tiket tidak dibuat agen, hanya disarankan di komentar.
 
@@ -90,7 +115,7 @@ flowchart TD
   G[Cek awal: MCP, transisi, akun uji, sinkron dokumen] --> V{Gerbang validasi}
   V -->|Tidak layak / belum divalidasi| A[Tanya kamu]
   V -->|Layak / Layak dengan catatan| W[Worktree + branch tiket dari base, Matriks env dev/beta/live]
-  W --> S[Rencana & test case di Claude Docs] --> DR[Release: Draft PR/MR per tiket]
+  W --> S[Rencana & test case: docs/tickets/KODE/rencana.md] --> DR[Release: Draft PR/MR per tiket]
   DR --> K[Coder: cek silang kontrak + desain ke SPV, TDD, push rutin]
   K --> R{Reviewer: performa + keamanan, lalu logika vs AC; review di PR/MR}
   R -->|ada temuan wajib| K
@@ -101,7 +126,7 @@ flowchart TD
   Q -->|lulus, --uat: UAT kamu dulu| P[Laporan uji, PR/MR ditandai siap, komentar tiket]
   P --> T[Tiket ke Ready To Review + hapus worktree tiket]
 ```
-- **Sebelum mulai**, SPV menyinkronkan dokumen (business discovery, mockup, kontrak API, blueprint; sama seperti `/validate-tiket`) dan membaca laporan validasi terakhir:
+- **Sebelum mulai**, SPV menyinkronkan dokumen (business discovery, prototipe desain, kontrak API, blueprint; sama seperti `/validate-tiket`) dan membaca laporan validasi terakhir:
 
   | Laporan validasi | Tindakan |
   | --- | --- |
@@ -118,7 +143,7 @@ flowchart TD
 - **Coder** wajib cek silang ke SPV sebelum kode: kontrak API dan detail desain yang di-slice.
 - **Reviewer:** prioritas performa ringan + keamanan, lalu logika sesuai aturan bisnis dan AC. Review ditulis di PR/MR.
 - **Branch batch** hanya salinan lokal untuk build QA. Branch tiket tetap utuh dan di-push; PR/MR tiap tiket bersih dari tiket lain.
-- **QA** membandingkan UI dengan mockup dan menguji per server; laporan menyorot endpoint yang sudah dan belum tersedia di dev/beta/live.
+- **QA** membandingkan UI dengan state prototipe yang sama dan menguji per server; laporan menyorot endpoint yang sudah dan belum tersedia di dev/beta/live.
 - **Regresi area terdampak:** QA juga menjalankan flow suite regresi (bertag `area-<modul>`) untuk modul yang disentuh tiket. Flow TC yang lulus dan stabil ditambahkan Coder ke suite di branch tiket, jadi suite tumbuh dari tiket ke tiket. Lokasi suite disimpan di memory project.
 - **Tiap build variant** disertai nama server + base URL API-nya di catatan rilis, laporan, PR/MR, dan komentar tiket.
 - **SPV memantau semua sub-agent sampai tugasnya tuntas**: status berkala, cek hasil benar-benar ada, lalu menghentikan teammate dan menutup panelnya.
@@ -143,12 +168,12 @@ Tiket yang pernah dikeluarkan dari rilis: PR **revert dari revert** dulu, baru P
 1. `git fetch`, lalu `release-trace.sh` melacak tiap commit `<primary>..<protected>` ke PR/MR, tiket, dan programmer. Hotfix belum di-back-merge → berhenti dan tanya.
 2. Cek semua tiket Done dan Matriks env live; yang belum → rekomendasi.
 2b. **Regresi penuh di beta** (gerbang utama): build beta dari commit rilis yang sama (`<sha-rilis>`), QA menjalankan seluruh suite regresi di device dengan akun uji. Hasilnya masuk laporan rilis; flow gagal dikaitkan ke tiket yang menyentuh modulnya → rekomendasi. Manusia melihat hasil ini sebelum memutuskan.
-3. Laporan Claude Docs `Perubahan rilis vX.Y.Z` + komentar di tiket rilis + PR rilis `<protected>` → `<primary>` (merge commit, bukan squash).
+3. Laporan `Perubahan rilis vX.Y.Z` (default `docs/rilis/vX.Y.Z.md`) + komentar di tiket rilis + PR rilis `<protected>` → `<primary>` (merge commit, bukan squash).
 4. Keluarkan tiket X → agen membuat PR revert, lalu tracing diulang.
 5. Setelah konfirmasi: build live (`.aab` + TestFlight) lalu **smoke live** (flow `smoke-live`, baca saja, tanpa menulis data); smoke gagal → tidak minta izin upload. Upload produksi butuh izin, PR rilis **di-merge manusia**, lalu tag `vX.Y.Z` di-push ke `upstream` dan `origin`.
 
 ## `/audit-issue`
-1. Langsung membuat dokumen laporan di Claude Docs, lalu memecah keluhan jadi pertanyaan.
+1. Langsung membuat dokumen laporan di platform dokumentasi, lalu memecah keluhan jadi pertanyaan.
 2. Auditor menelusuri kode, riwayat git, log, dan reproduksi di device memakai build yang **sudah ada**; Analis membandingkan lampiran (mockup/PDF/gambar) dengan aplikasi.
 3. Kesimpulan dengan tingkat keyakinan (**pasti / kuat / dugaan**) + saran tiket (tidak dibuat otomatis).
 4. Selama audit, guard memblokir semua penulisan ke repo, git remote, dan platform tiket.
